@@ -1,0 +1,19 @@
+{
+  "name": "gameengine",
+  "version": "1.0.0",
+  "description": "An attempt at a TS based game engine.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NPA101/GameEngine.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NPA101/GameEngine/issues"
+  },
+  "homepage": "https://github.com/NPA101/GameEngine#readme"
+}

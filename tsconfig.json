@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+         "target": "es6",
+         "removeComments": true,
+         "noImplicitAny": false,
+         "sourceMap": true,
+         "outDir": "./JS/",
+         "moduleResolution": "Classic",
+         "strict": true,
+         "esModuleInterop": true,
+         "baseUrl": "./"
+     },
+     "exclude": [
+         "node_modules"
+     ]
+ }
