@@ -1,7 +1,4 @@
 import Team from "./team.js";
-function mod(a, b) {
-    return (a % b + b) % b;
-}
 class Tile {
     constructor(boardID, teamID, Occupation) {
         this.BoardID = boardID;
@@ -55,44 +52,6 @@ class Board {
         if (!pieceID)
             return;
         return possibleMoves;
-    }
-    moveIn(tileIndex, amount) {
-        const differenceRatio = tileIndex / this.ColumnCount - amount;
-        const isCrossed = Math.floor(0.5 * Math.sign(differenceRatio));
-        const flooredDR = Math.floor(differenceRatio);
-        const newTileIndex = this.ColumnCount * (((tileIndex / this.ColumnCount + 0.5 * isCrossed) % 1) + isCrossed * (1 + 2 * flooredDR) + flooredDR);
-        if (newTileIndex < this.ColumnCount * this.RowCount)
-            return newTileIndex;
-    }
-    moveOut(tileIndex, amount) {
-        const newIndex = tileIndex + this.ColumnCount * amount;
-        if (this.Tiles[newIndex])
-            return newIndex;
-        return undefined;
-    }
-    moveRight(tileIndex, amount) {
-        return Math.floor(tileIndex / this.ColumnCount) * this.ColumnCount + (tileIndex + amount) % this.ColumnCount;
-    }
-    moveLeft(tileIndex, amount) {
-        return Math.floor(tileIndex / this.ColumnCount) * this.ColumnCount + (tileIndex - amount) % this.ColumnCount;
-    }
-    moveDiagonalRightIn(tileIndex, amount) {
-        const rowCount = this.RowCount - 1;
-        const tileT = tileIndex % this.ColumnCount;
-        const tileR = Math.floor(tileIndex / this.ColumnCount);
-        const deltaRow = this.RowCount - (tileR + 1);
-        const moveT = (deltaRow + amount + rowCount) % (2 * rowCount + 1) - rowCount;
-        const moveR = Math.abs(moveT);
-        return mod(tileT - moveT + deltaRow, this.ColumnCount) + (rowCount - moveR) * this.ColumnCount;
-    }
-    moveDiagonalLeftIn(tileIndex, amount) {
-        const rowCount = this.RowCount - 1;
-        const tileT = tileIndex % this.ColumnCount;
-        const tileR = Math.floor(tileIndex / this.ColumnCount);
-        const deltaRow = this.RowCount - (tileR + 1);
-        const moveT = (deltaRow + amount + rowCount) % (2 * rowCount + 1) - rowCount;
-        const moveR = Math.abs(moveT);
-        return mod(tileT + moveT - deltaRow, this.ColumnCount) + (rowCount - moveR) * this.ColumnCount;
     }
 }
 Board.Boards = [];
