@@ -6,7 +6,7 @@ const mod = (a, b) => { return (a % b + b) % b };
 const floor = Math.floor;
 
 class MovementManager {
-    public static moveRadial(board: Board, tileIndex: number, amount: number) {
+    public static moveRadial(board: Board, tileIndex: number, amount: number): number | undefined {
         const differenceRatio: number = tileIndex/board.ColumnCount - amount;
         const isCrossed = floor(0.5 * Math.sign(differenceRatio));
         const flooredDR = floor(differenceRatio);
@@ -37,7 +37,7 @@ class MovementManager {
     //     return undefined;
     // }
 
-    public static moveTangential(board: Board, tileIndex: number, amount: number) {
+    public static moveTangential(board: Board, tileIndex: number, amount: number): number {
         return (tileIndex + amount) % board.ColumnCount + floor(tileIndex / board.ColumnCount) * board.ColumnCount;
     }
 
@@ -53,7 +53,7 @@ class MovementManager {
     //     return floor(tileIndex / board.ColumnCount) * board.ColumnCount + (tileIndex - amount) % board.ColumnCount;
     // }
 
-    public static moveDiagonalRight(board: Board, tileIndex: number, amount: number) {
+    public static moveDiagonalRight(board: Board, tileIndex: number, amount: number): number {
         const rowCount: number = board.RowCount - 1;
         const tileT: number = tileIndex % board.ColumnCount;
         const tileR: number = floor(tileIndex / board.ColumnCount);
@@ -64,7 +64,7 @@ class MovementManager {
         return mod(tileT - deltaRow + moveT, board.ColumnCount) + (rowCount - moveR)*board.ColumnCount;
     }
 
-    public static moveDiagonalLeft(board: Board, tileIndex: number, amount: number) {
+    public static moveDiagonalLeft(board: Board, tileIndex: number, amount: number): number {
         const rowCount: number = board.RowCount - 1;
         const tileT: number = tileIndex % board.ColumnCount;
         const tileR: number = floor(tileIndex / board.ColumnCount);
