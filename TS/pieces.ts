@@ -1,30 +1,28 @@
 class Piece {
     public Points: number;
-    public HasCrossed: boolean;
 
     constructor(points: number) {
         this.Points = points;
-        this.HasCrossed = false;
     }
 }
 
 const Pieces: Array<Piece> = [
-    //Pawn//
+    //Pawn, 0//
     new Piece(1),
 
-    //Knight//
+    //Knight, 1//
     new Piece(3),
 
-    //Bishop//
+    //Bishop, 2//
     new Piece(3),
 
-    //Rook//
+    //Rook, 3//
     new Piece(5),
 
-    //Queen//
+    //Queen, 4//
     new Piece(9),
 
-    //King//
+    //King, 5//
     new Piece(20)
 ];
 

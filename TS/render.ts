@@ -4,7 +4,8 @@ import MovementManager from "./movementManager.js";
 const board1 = new Board(1, 6);
 console.log(board1);
 
-console.log(22);
-const a: number = 10;
-console.log(MovementManager.moveDiagonalRight(board1, 22, a));
-// console.log(board1.moveDiagonalRightIn(27, a));
+board1.setPiece(27, 1, 4);
+//board1.setPiece(13, 1, 3);
+board1.setPiece(34, 1, 2);
+const a: number = 0;
+console.log(MovementManager.getPossibleMoves(board1, 27));

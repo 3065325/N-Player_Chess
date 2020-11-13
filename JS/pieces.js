@@ -1,7 +1,6 @@
 class Piece {
     constructor(points) {
         this.Points = points;
-        this.HasCrossed = false;
     }
 }
 const Pieces = [

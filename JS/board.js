@@ -1,11 +1,5 @@
 import Team from "./team.js";
-class Tile {
-    constructor(boardID, teamID, Occupation) {
-        this.BoardID = boardID;
-        this.TeamID = teamID || undefined;
-        this.Occupation = Occupation || undefined;
-    }
-}
+import Tile from "./tile.js";
 class Board {
     constructor(playerCount, rowCount) {
         this.BoardID = Board.Boards.length;
@@ -31,27 +25,20 @@ class Board {
         team.Name = name;
         team.Color = color;
     }
-    movePiece(oldTileIndex, newTileIndex) {
-        const oldTile = this.Tiles[oldTileIndex];
-        const newTile = this.Tiles[newTileIndex];
-        newTile.Occupation = oldTile.Occupation;
-        newTile.TeamID = oldTile.TeamID;
-        oldTile.Occupation = undefined;
-        oldTile.TeamID = undefined;
-    }
     setPiece(tileIndex, teamID, pieceID) {
-        this.Tiles[tileIndex].Occupation = pieceID;
-        this.Tiles[tileIndex].TeamID = teamID;
+        const tile = this.Tiles[tileIndex];
+        tile.Occupation = pieceID;
+        tile.TeamID = teamID;
+        console.log(tileIndex, teamID, pieceID);
+    }
+    removePiece(tileIndex, teamID) {
+        const tile = this.Tiles[tileIndex];
+        tile.Occupation = undefined;
+        tile.TeamID = undefined;
+        console.log(tileIndex, teamID);
     }
     getTileID(column, row) {
         return (column % this.ColumnCount) + (row % this.RowCount) * this.ColumnCount;
-    }
-    getPossiblePawnMoves(tileIndex) {
-        const possibleMoves = [];
-        const pieceID = this.Tiles[tileIndex].Occupation;
-        if (!pieceID)
-            return;
-        return possibleMoves;
     }
 }
 Board.Boards = [];

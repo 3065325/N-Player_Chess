@@ -1,17 +1,6 @@
 import Team from "./team.js";
+import Tile from "./tile.js";
 import Pieces from "./pieces.js";
-
-class Tile {
-    public BoardID: number;
-    public TeamID: number | undefined;
-    public Occupation: number | undefined;
-
-    constructor(boardID: number, teamID?: number, Occupation?: number) {
-        this.BoardID = boardID;
-        this.TeamID = teamID || undefined;
-        this.Occupation = Occupation || undefined;
-    }
-}
 
 class Board {
     public static Boards: Array<Board> =  [];
@@ -57,31 +46,22 @@ class Board {
         team.Color = color;
     }
 
-    public movePiece(oldTileIndex: number, newTileIndex: number): void {
-        const oldTile = this.Tiles[oldTileIndex];
-        const newTile = this.Tiles[newTileIndex];
-
-        newTile.Occupation = oldTile.Occupation;
-        newTile.TeamID = oldTile.TeamID;
-        oldTile.Occupation = undefined;
-        oldTile.TeamID = undefined;
+    public setPiece(tileIndex: number, teamID: number, pieceID: number): void {
+        const tile: Tile = this.Tiles[tileIndex];
+        tile.Occupation = pieceID;
+        tile.TeamID = teamID;
+        console.log(tileIndex, teamID, pieceID);
     }
 
-    public setPiece(tileIndex: number, teamID: number, pieceID: number): void {
-        this.Tiles[tileIndex].Occupation = pieceID;
-        this.Tiles[tileIndex].TeamID = teamID;
+    public removePiece(tileIndex: number, teamID: number): void {
+        const tile: Tile = this.Tiles[tileIndex];
+        tile.Occupation = undefined;
+        tile.TeamID = undefined;
+        console.log(tileIndex, teamID);
     }
 
     public getTileID(column: number, row: number): number{
         return (column % this.ColumnCount) + (row % this.RowCount) * this.ColumnCount;
-    }
-
-    public getPossiblePawnMoves(tileIndex: number): Array<number> | undefined {
-        const possibleMoves: Array<number> = [];
-        const pieceID: number | undefined = this.Tiles[tileIndex].Occupation;
-        if (!pieceID) return;
-
-        return possibleMoves;
     }
 }
 
