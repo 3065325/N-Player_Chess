@@ -3,6 +3,7 @@ class Tile {
         this.BoardID = boardID;
         this.TeamID = teamID || undefined;
         this.Occupation = Occupation || undefined;
+        this.InSightOf = [];
         this.HasMoved = false;
     }
 }

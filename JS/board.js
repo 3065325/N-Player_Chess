@@ -29,7 +29,6 @@ class Board {
         const tile = this.Tiles[tileIndex];
         tile.Occupation = pieceID;
         tile.TeamID = teamID;
-        console.log(tileIndex, teamID, pieceID);
     }
     removePiece(tileIndex, teamID) {
         const tile = this.Tiles[tileIndex];

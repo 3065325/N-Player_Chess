@@ -5,7 +5,7 @@ const mod = (a, b) => { return (a % b + b) % b };
 const floor = Math.floor;
 
 class MovementManager {
-    public static possibleMoveFunctions: Array<(board: Board, tileIndex: number) => Array<number>> = [];
+    public static possibleMoveFunctions: Array<(board: Board, tileIndex: number, teamID?: number) => Array<number>> = [];
 
     public static movePiece(board: Board, oldTileIndex: number, newTileIndex: number): void {
         const oldTile = board.Tiles[oldTileIndex];
@@ -64,22 +64,23 @@ class MovementManager {
     }
 }
 
-MovementManager.possibleMoveFunctions[0/*Pawn*/] = (board: Board, tileIndex: number): Array<number> => {
+MovementManager.possibleMoveFunctions[0/*Pawn*/] = (board: Board, tileIndex: number, teamID?: number): Array<number> => {
     const possibleMoves: Array<number> = [];
     const tile: Tile = board.Tiles[tileIndex];
+    const team: number | undefined = teamID || tile.TeamID;
 
     let potentialTileIndex: number | undefined = tileIndex;
     let potentialTile: Tile = board.Tiles[potentialTileIndex];
 
     potentialTileIndex = MovementManager.moveDiagonalRight(board, tileIndex, 1);
     potentialTile = board.Tiles[potentialTileIndex];
-    if (potentialTile.TeamID !== tile.TeamID && potentialTile.TeamID !== undefined) {
+    if (potentialTile.TeamID !== team && potentialTile.TeamID !== undefined) {
         if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
     }
 
     potentialTileIndex = MovementManager.moveDiagonalLeft(board, tileIndex, 1);
     potentialTile = board.Tiles[potentialTileIndex];
-    if (potentialTile.TeamID !== tile.TeamID && potentialTile.TeamID !== undefined) {
+    if (potentialTile.TeamID !== team && potentialTile.TeamID !== undefined) {
         if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
     }
 
@@ -96,9 +97,10 @@ MovementManager.possibleMoveFunctions[0/*Pawn*/] = (board: Board, tileIndex: num
     return possibleMoves;
 }
 
-MovementManager.possibleMoveFunctions[1/*Knight*/] = (board: Board, tileIndex: number): Array<number> => {
+MovementManager.possibleMoveFunctions[1/*Knight*/] = (board: Board, tileIndex: number, teamID?: number): Array<number> => {
     const possibleMoves: Array<number> = [];
     const tile: Tile = board.Tiles[tileIndex];
+    const team: number | undefined = teamID || tile.TeamID;
 
     let potentialTileIndex: number | undefined;
     let potentialTile: Tile;
@@ -113,7 +115,7 @@ MovementManager.possibleMoveFunctions[1/*Knight*/] = (board: Board, tileIndex: n
             if (potentialTileIndex === undefined) continue;
 
             potentialTile = board.Tiles[potentialTileIndex];
-            if (potentialTile.TeamID !== tile.TeamID) {
+            if (potentialTile.TeamID !== team) {
                 if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
             }
         }
@@ -132,7 +134,7 @@ MovementManager.possibleMoveFunctions[1/*Knight*/] = (board: Board, tileIndex: n
             potentialTileIndex = MovementManager.moveTangential(board, flipTileIndex, j);
 
             potentialTile = board.Tiles[potentialTileIndex];
-            if (potentialTile.TeamID !== tile.TeamID) {
+            if (potentialTile.TeamID !== team) {
                 if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
             }
         }
@@ -141,9 +143,10 @@ MovementManager.possibleMoveFunctions[1/*Knight*/] = (board: Board, tileIndex: n
     return possibleMoves;
 }
 
-MovementManager.possibleMoveFunctions[2/*Bishop*/] = (board: Board, tileIndex: number): Array<number> => {
+MovementManager.possibleMoveFunctions[2/*Bishop*/] = (board: Board, tileIndex: number, teamID?: number): Array<number> => {
     const possibleMoves: Array<number> = [];
     const tile: Tile = board.Tiles[tileIndex];
+    const team: number | undefined = teamID || tile.TeamID;
 
     const pathLength: number = 2*board.RowCount - 1;
 
@@ -157,7 +160,7 @@ MovementManager.possibleMoveFunctions[2/*Bishop*/] = (board: Board, tileIndex: n
         potentialTile = board.Tiles[potentialTileIndex];
         console.log("RightIn", potentialTileIndex);
 
-        if (potentialTile.TeamID === tile.TeamID) break;
+        if (potentialTile.TeamID === team) break;
 
         if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
 
@@ -172,7 +175,7 @@ MovementManager.possibleMoveFunctions[2/*Bishop*/] = (board: Board, tileIndex: n
             potentialTile = board.Tiles[potentialTileIndex];
             console.log("RightOut", potentialTileIndex);
     
-            if (potentialTile.TeamID === tile.TeamID) break;
+            if (potentialTile.TeamID === team) break;
     
             if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
     
@@ -187,7 +190,7 @@ MovementManager.possibleMoveFunctions[2/*Bishop*/] = (board: Board, tileIndex: n
         potentialTile = board.Tiles[potentialTileIndex];
         console.log("LeftIn", potentialTileIndex);
 
-        if (potentialTile.TeamID === tile.TeamID) break;
+        if (potentialTile.TeamID === team) break;
 
         if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
 
@@ -202,7 +205,7 @@ MovementManager.possibleMoveFunctions[2/*Bishop*/] = (board: Board, tileIndex: n
             potentialTile = board.Tiles[potentialTileIndex];
             console.log("LeftOut", potentialTileIndex);
     
-            if (potentialTile.TeamID === tile.TeamID) break;
+            if (potentialTile.TeamID === team) break;
     
             if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
     
@@ -213,9 +216,10 @@ MovementManager.possibleMoveFunctions[2/*Bishop*/] = (board: Board, tileIndex: n
     return possibleMoves;
 }
 
-MovementManager.possibleMoveFunctions[3/*Rook*/] = (board: Board, tileIndex: number): Array<number> => {
+MovementManager.possibleMoveFunctions[3/*Rook*/] = (board: Board, tileIndex: number, teamID?: number): Array<number> => {
     const possibleMoves: Array<number> = [];
     const tile: Tile = board.Tiles[tileIndex];
+    const team: number | undefined = teamID || tile.TeamID;
 
     const pathLengthTangential: number = board.ColumnCount - 1;
     const pathLengthRadial: number = board.RowCount*2 - 1;
@@ -230,7 +234,7 @@ MovementManager.possibleMoveFunctions[3/*Rook*/] = (board: Board, tileIndex: num
         potentialTile = board.Tiles[potentialTileIndex];
         console.log("Right", potentialTileIndex);
 
-        if (potentialTile.TeamID === tile.TeamID) break;
+        if (potentialTile.TeamID === team) break;
 
         if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
 
@@ -245,7 +249,7 @@ MovementManager.possibleMoveFunctions[3/*Rook*/] = (board: Board, tileIndex: num
             potentialTile = board.Tiles[potentialTileIndex];
             console.log("Left", potentialTileIndex);
     
-            if (potentialTile.TeamID === tile.TeamID) break;
+            if (potentialTile.TeamID === team) break;
     
             if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
     
@@ -260,7 +264,7 @@ MovementManager.possibleMoveFunctions[3/*Rook*/] = (board: Board, tileIndex: num
         potentialTile = board.Tiles[potentialTileIndex];
         console.log("In", potentialTileIndex);
 
-        if (potentialTile.TeamID === tile.TeamID) break;
+        if (potentialTile.TeamID === team) break;
 
         if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
 
@@ -274,7 +278,7 @@ MovementManager.possibleMoveFunctions[3/*Rook*/] = (board: Board, tileIndex: num
         potentialTile = board.Tiles[potentialTileIndex];
         console.log("Out", potentialTileIndex);
 
-        if (potentialTile.TeamID === tile.TeamID) break;
+        if (potentialTile.TeamID === team) break;
 
         if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
 
@@ -284,9 +288,10 @@ MovementManager.possibleMoveFunctions[3/*Rook*/] = (board: Board, tileIndex: num
     return possibleMoves;
 }
 
-MovementManager.possibleMoveFunctions[4/*Queen*/] = (board: Board, tileIndex: number): Array<number> => {
+MovementManager.possibleMoveFunctions[4/*Queen*/] = (board: Board, tileIndex: number, teamID?: number): Array<number> => {
     const possibleMoves: Array<number> = [];
     const tile: Tile = board.Tiles[tileIndex];
+    const team: number | undefined = teamID || tile.TeamID;
 
     const pathLengthDiagonal: number = 2*board.RowCount - 1;
     const pathLengthTangential: number = board.ColumnCount - 1;
@@ -302,7 +307,7 @@ MovementManager.possibleMoveFunctions[4/*Queen*/] = (board: Board, tileIndex: nu
         potentialTile = board.Tiles[potentialTileIndex];
         console.log("RightIn", potentialTileIndex);
 
-        if (potentialTile.TeamID === tile.TeamID) break;
+        if (potentialTile.TeamID === team) break;
 
         if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
 
@@ -317,7 +322,7 @@ MovementManager.possibleMoveFunctions[4/*Queen*/] = (board: Board, tileIndex: nu
             potentialTile = board.Tiles[potentialTileIndex];
             console.log("RightOut", potentialTileIndex);
     
-            if (potentialTile.TeamID === tile.TeamID) break;
+            if (potentialTile.TeamID === team) break;
     
             if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
     
@@ -332,7 +337,7 @@ MovementManager.possibleMoveFunctions[4/*Queen*/] = (board: Board, tileIndex: nu
         potentialTile = board.Tiles[potentialTileIndex];
         console.log("LeftIn", potentialTileIndex);
 
-        if (potentialTile.TeamID === tile.TeamID) break;
+        if (potentialTile.TeamID === team) break;
 
         if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
 
@@ -347,7 +352,7 @@ MovementManager.possibleMoveFunctions[4/*Queen*/] = (board: Board, tileIndex: nu
             potentialTile = board.Tiles[potentialTileIndex];
             console.log("LeftOut", potentialTileIndex);
     
-            if (potentialTile.TeamID === tile.TeamID) break;
+            if (potentialTile.TeamID === team) break;
     
             if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
     
@@ -362,7 +367,7 @@ MovementManager.possibleMoveFunctions[4/*Queen*/] = (board: Board, tileIndex: nu
         potentialTile = board.Tiles[potentialTileIndex];
         console.log("Right", potentialTileIndex);
 
-        if (potentialTile.TeamID === tile.TeamID) break;
+        if (potentialTile.TeamID === team) break;
 
         if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
 
@@ -377,7 +382,7 @@ MovementManager.possibleMoveFunctions[4/*Queen*/] = (board: Board, tileIndex: nu
             potentialTile = board.Tiles[potentialTileIndex];
             console.log("Left", potentialTileIndex);
     
-            if (potentialTile.TeamID === tile.TeamID) break;
+            if (potentialTile.TeamID === team) break;
     
             if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
     
@@ -392,7 +397,7 @@ MovementManager.possibleMoveFunctions[4/*Queen*/] = (board: Board, tileIndex: nu
         potentialTile = board.Tiles[potentialTileIndex];
         console.log("In", potentialTileIndex);
 
-        if (potentialTile.TeamID === tile.TeamID) break;
+        if (potentialTile.TeamID === team) break;
 
         if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
 
@@ -406,7 +411,7 @@ MovementManager.possibleMoveFunctions[4/*Queen*/] = (board: Board, tileIndex: nu
         potentialTile = board.Tiles[potentialTileIndex];
         console.log("Out", potentialTileIndex);
 
-        if (potentialTile.TeamID === tile.TeamID) break;
+        if (potentialTile.TeamID === team) break;
 
         if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
 
@@ -416,15 +421,49 @@ MovementManager.possibleMoveFunctions[4/*Queen*/] = (board: Board, tileIndex: nu
     return possibleMoves;
 }
 
-MovementManager.possibleMoveFunctions[5/*King*/] = (board: Board, tileIndex: number): Array<number> => {
+MovementManager.possibleMoveFunctions[5/*King*/] = (board: Board, tileIndex: number, teamID?: number): Array<number> => {
     const possibleMoves: Array<number> = [];
     const tile: Tile = board.Tiles[tileIndex];
+    const team: number | undefined = teamID || tile.TeamID;
 
     let potentialTileIndex: number | undefined;
     let potentialTile: Tile;
 
-    for (let i = -1; i < 3; i += 2) {
+    for (let i = -1; i < 2; i += 2) {
+        potentialTileIndex = MovementManager.moveRadial(board, tileIndex, i);
+        if (potentialTileIndex === undefined) continue;
+        potentialTile = board.Tiles[potentialTileIndex];
 
+        if (potentialTile.TeamID === team) continue;
+
+        if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
+    }
+
+    for (let i = -1; i < 2; i += 2) {
+        potentialTileIndex = MovementManager.moveTangential(board, tileIndex, i);
+        potentialTile = board.Tiles[potentialTileIndex];
+
+        if (potentialTile.TeamID === team) continue;
+
+        if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
+    }
+
+    for (let i = -1; i < 2; i += 2) {
+        potentialTileIndex = MovementManager.moveDiagonalRight(board, tileIndex, i);
+        potentialTile = board.Tiles[potentialTileIndex];
+
+        if (potentialTile.TeamID === team) continue;
+
+        if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
+    }
+
+    for (let i = -1; i < 2; i += 2) {
+        potentialTileIndex = MovementManager.moveDiagonalLeft(board, tileIndex, i);
+        potentialTile = board.Tiles[potentialTileIndex];
+
+        if (potentialTile.TeamID === team) continue;
+
+        if (!possibleMoves.includes(potentialTileIndex)) possibleMoves.push(potentialTileIndex);
     }
 
     return possibleMoves;

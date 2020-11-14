@@ -50,7 +50,7 @@ class Board {
         const tile: Tile = this.Tiles[tileIndex];
         tile.Occupation = pieceID;
         tile.TeamID = teamID;
-        console.log(tileIndex, teamID, pieceID);
+        
     }
 
     public removePiece(tileIndex: number, teamID: number): void {
