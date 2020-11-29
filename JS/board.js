@@ -1,45 +1,52 @@
-import Team from "./team.js";
-import Tile from "./tile.js";
-class Board {
-    constructor(playerCount, rowCount) {
-        this.BoardID = Board.Boards.length;
-        this.PlayerCount = playerCount;
-        this.RowCount = rowCount;
-        this.ColumnCount = this.PlayerCount * 8;
-        this.Teams = new Array(this.PlayerCount);
-        this.Tiles = new Array(this.RowCount * this.ColumnCount);
-        this.initialize();
-    }
-    initialize() {
-        Board.Boards[this.BoardID] = this;
-        const colorIncrement = 360 / this.PlayerCount;
-        for (let i = 0; i < this.PlayerCount; i++) {
-            this.Teams[i] = new Team(this.BoardID, i, `Team ${i + 1}`, `hsl(${i * colorIncrement}, 100%, 50%)`);
+import Players from "./player.js";
+import Tiles from "./tile.js";
+import Pieces from "./pieces.js";
+class Boards {
+    static createBoard(playerCount, columnCount, rowCount) {
+        columnCount = columnCount || 8 * playerCount;
+        rowCount = rowCount || 6;
+        const nextIndex = Boards.IndexStack.pop() || Boards.Counter++;
+        Boards.PlayerCounts[nextIndex] = playerCount;
+        Boards.ColumnCounts[nextIndex] = columnCount;
+        Boards.RowCounts[nextIndex] = rowCount;
+        let tempArray = new Array(playerCount);
+        const colorIncrement = 360 / playerCount;
+        for (let i = 0; i < playerCount; i++) {
+            tempArray[i] = Players.createPlayer(nextIndex, `Team ${i + 1}`, `hsl(${i * colorIncrement}, 55%, 40%)`);
         }
-        for (let i = 0; i < this.Tiles.length; i++) {
-            this.Tiles[i] = new Tile(this.BoardID);
+        Boards.Players[nextIndex] = tempArray;
+        tempArray = new Array(columnCount * rowCount);
+        for (let i = 0; i < tempArray.length; i++) {
+            tempArray[i] = Tiles.createTile(nextIndex);
         }
+        Boards.Tiles[nextIndex] = tempArray;
+        return nextIndex;
     }
-    editTeam(teamID, name, color) {
-        const team = this.Teams[teamID];
-        team.Name = name;
-        team.Color = color;
+    static removeBoard(boardIndex) {
+        if (boardIndex < 1 || boardIndex > Boards.Counter)
+            return;
+        Boards.IndexStack.push(boardIndex);
+        delete Boards.PlayerCounts[boardIndex];
+        delete Boards.ColumnCounts[boardIndex];
+        delete Boards.RowCounts[boardIndex];
+        delete Boards.Players[boardIndex];
+        delete Boards.Tiles[boardIndex];
     }
-    setPiece(tileIndex, teamID, pieceID) {
-        const tile = this.Tiles[tileIndex];
-        tile.Occupation = pieceID;
-        tile.TeamID = teamID;
-    }
-    removePiece(tileIndex, teamID) {
-        const tile = this.Tiles[tileIndex];
-        tile.Occupation = undefined;
-        tile.TeamID = undefined;
-        console.log(tileIndex, teamID);
-    }
-    getTileID(column, row) {
-        return (column % this.ColumnCount) + (row % this.RowCount) * this.ColumnCount;
+    static setPiece(pieceType, playerID, boardIndex, tileID) {
+        const playerIndex = Boards.Players[boardIndex][playerID];
+        const pieceIndex = Pieces.createPiece(pieceType, playerIndex);
+        Players.Pieces[playerIndex].push(pieceIndex);
+        const tileIndex = Boards.Tiles[boardIndex][tileID];
+        Tiles.Occupations[tileIndex] = pieceIndex;
+        return pieceIndex;
     }
 }
-Board.Boards = [];
-export default Board;
+Boards.PlayerCounts = [];
+Boards.ColumnCounts = [];
+Boards.RowCounts = [];
+Boards.Players = [];
+Boards.Tiles = [];
+Boards.Counter = 0;
+Boards.IndexStack = [];
+export default Boards;
 //# sourceMappingURL=board.js.map
