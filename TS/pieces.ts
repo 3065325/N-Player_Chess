@@ -1,4 +1,4 @@
-import {dataInterface, PieceData, PieceNames} from "./pieceData.js";
+import {dataInterface, PieceData, PieceTypes} from "./pieceData.js";
 
 class Pieces {
     public static PieceTypes: Array<number> = [];
@@ -11,7 +11,7 @@ class Pieces {
     private static Counter: number = 0;
     private static IndexStack: Array<number> = [];
 
-    public static createPiece(pieceType: number, playerIndex: number): number {
+    public static createPiece(pieceType: PieceTypes, playerIndex: number): number {
         const nextIndex: number = Pieces.IndexStack.pop() || Pieces.Counter++;
 
         const pieceData: dataInterface = PieceData[pieceType];

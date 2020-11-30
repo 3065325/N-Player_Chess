@@ -1,4 +1,4 @@
-enum PieceNames {
+enum PieceTypes {
     Pawn = 0
 }
 
@@ -9,10 +9,10 @@ interface dataInterface {
 }
 
 const PieceData: Array<dataInterface> = [];
-PieceData[PieceNames.Pawn] = {
+PieceData[PieceTypes.Pawn] = {
     points: 1,
     trackMoved: false,
-    trackCrossed: true,
+    trackCrossed: true
 };
 
-export {PieceNames, dataInterface, PieceData};
+export {PieceTypes, dataInterface, PieceData};

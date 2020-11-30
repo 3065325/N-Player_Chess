@@ -1,12 +1,32 @@
+import Boards from "./board";
+import Tiles from "./tile";
+import Pieces from "./pieces";
+import { PieceTypes } from "./pieceData";
+
 const mod = (a, b) => { return (a % b) % b };
 const floor = Math.floor;
 
 class MovementManager {
+    public static PossibleMoveFunctions: Array<(boardIndex: number, tileID: number, playerID?: number) => Array<number>> = [];
+
+    public static getMovesFromType(boardIndex: number, tileID: number, playerID?: number): Array<number> {
+        const tileIndex: number = Boards.TileIndices[boardIndex][tileID];
+        const pieceIndex: number | undefined = Tiles.Occupations[tileIndex];
+        if (!pieceIndex) return [];
+
+        const pieceType: PieceTypes = Pieces.PieceTypes[pieceIndex];
+
+        return MovementManager.PossibleMoveFunctions[pieceType](boardIndex, tileID, playerID);
+    }
+
     
 }
 
+
+
 // import Tile from "./tile.js";
 // import Board from "./board";
+// import Tiles from "./tile";
 
 // const mod = (a, b) => { return (a % b + b) % b };
 // const floor = Math.floor;

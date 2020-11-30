@@ -1,15 +1,15 @@
 import Players from "./player.js";
 import Tiles from "./tile.js";
 import Pieces from "./pieces.js";
-import {PieceNames} from "./pieceData.js";
+import {PieceTypes} from "./pieceData.js";
 
 class Boards {
     public static PlayerCounts: Array<number> = [];
     public static ColumnCounts: Array<number> = [];
     public static RowCounts: Array<number> = [];
 
-    public static Players: Array<Array<number>> = [];
-    public static Tiles: Array<Array<number>> = [];
+    public static PlayerIndices: Array<Array<number>> = [];
+    public static TileIndices: Array<Array<number>> = [];
 
     private static Counter: number = 0;
     private static IndexStack: Array<number> = [];
@@ -29,13 +29,13 @@ class Boards {
         for (let i = 0; i < playerCount; i++) {
             tempArray[i] = Players.createPlayer(nextIndex, `Team ${i + 1}`, `hsl(${i*colorIncrement}, 55%, 40%)`);
         }
-        Boards.Players[nextIndex] = tempArray;
+        Boards.PlayerIndices[nextIndex] = tempArray;
 
         tempArray = new Array(columnCount*rowCount);
         for (let i = 0; i < tempArray.length; i++) {
-           tempArray[i] = Tiles.createTile(nextIndex);
+            tempArray[i] = Tiles.createTile(nextIndex);
         }
-        Boards.Tiles[nextIndex] = tempArray;
+        Boards.TileIndices[nextIndex] = tempArray;
 
         return nextIndex;
     }
@@ -49,16 +49,16 @@ class Boards {
         delete Boards.ColumnCounts[boardIndex];
         delete Boards.RowCounts[boardIndex];
 
-        delete Boards.Players[boardIndex];
-        delete Boards.Tiles[boardIndex];
+        delete Boards.PlayerIndices[boardIndex];
+        delete Boards.TileIndices[boardIndex];
     }
 
-    public static setPiece(pieceType: PieceNames, playerID: number, boardIndex: number, tileID: number): number {
-        const playerIndex: number = Boards.Players[boardIndex][playerID];
+    public static setPiece(pieceType: PieceTypes, playerID: number, boardIndex: number, tileID: number): number {
+        const playerIndex: number = Boards.PlayerIndices[boardIndex][playerID];
         const pieceIndex: number = Pieces.createPiece(pieceType, playerIndex);
         Players.Pieces[playerIndex].push(pieceIndex);
 
-        const tileIndex: number = Boards.Tiles[boardIndex][tileID];
+        const tileIndex: number = Boards.TileIndices[boardIndex][tileID];
         Tiles.Occupations[tileIndex] = pieceIndex;
 
         return pieceIndex;
