@@ -6,10 +6,10 @@ class Pieces {
         Pieces.PieceTypes[nextIndex] = pieceType;
         Pieces.PlayerIndices[nextIndex] = playerIndex;
         Pieces.Points[nextIndex] = pieceData.points;
-        if (pieceData.trackMoved)
-            Pieces.HasMoved[nextIndex] = false;
-        if (pieceData.trackCrossed)
-            Pieces.HasCrossed[nextIndex] = false;
+        if (pieceData.trackMoved !== undefined)
+            Pieces.HasMoved.set(nextIndex, false);
+        if (pieceData.trackCrossed !== undefined)
+            Pieces.HasCrossed.set(nextIndex, false);
         return nextIndex;
     }
     static removePiece(pieceIndex) {
@@ -19,8 +19,8 @@ class Pieces {
         delete Pieces.PieceTypes[pieceIndex];
         delete Pieces.PlayerIndices[pieceIndex];
         delete Pieces.Points[pieceIndex];
-        delete Pieces.HasMoved[pieceIndex];
-        delete Pieces.HasCrossed[pieceIndex];
+        Pieces.HasMoved.delete(pieceIndex);
+        Pieces.HasCrossed.delete(pieceIndex);
     }
 }
 Pieces.PieceTypes = [];

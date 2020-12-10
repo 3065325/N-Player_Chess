@@ -6,6 +6,7 @@ class Players {
 
     public static Names: Array<string> = [];
     public static Colors: Array<string> = [];
+    public static IsDead: Array<boolean> = [];
 
     private static Counter: number = 0;
     private static IndexStack: Array<number> = [];
@@ -18,6 +19,7 @@ class Players {
 
         Players.Names[nextIndex] = name;
         Players.Colors[nextIndex] = color;
+        Players.IsDead[nextIndex] = false;
 
         return nextIndex;
     }
@@ -32,6 +34,7 @@ class Players {
         
         delete Players.Names[playerIndex];
         delete Players.Colors[playerIndex];
+        delete Players.IsDead[playerIndex];
     }
 }
 

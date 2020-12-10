@@ -1,12 +1,12 @@
-var PieceNames;
-(function (PieceNames) {
-    PieceNames[PieceNames["Pawn"] = 0] = "Pawn";
-})(PieceNames || (PieceNames = {}));
+var PieceTypes;
+(function (PieceTypes) {
+    PieceTypes[PieceTypes["Pawn"] = 0] = "Pawn";
+})(PieceTypes || (PieceTypes = {}));
 const PieceData = [];
-PieceData[PieceNames.Pawn] = {
+PieceData[PieceTypes.Pawn] = {
     points: 1,
     trackMoved: false,
-    trackCrossed: true,
+    trackCrossed: true
 };
-export { PieceNames, PieceData };
+export { PieceTypes, PieceData };
 //# sourceMappingURL=pieceData.js.map

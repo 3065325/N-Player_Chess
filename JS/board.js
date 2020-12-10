@@ -2,9 +2,10 @@ import Players from "./player.js";
 import Tiles from "./tile.js";
 import Pieces from "./pieces.js";
 class Boards {
-    static createBoard(playerCount, columnCount, rowCount) {
-        columnCount = columnCount || 8 * playerCount;
-        rowCount = rowCount || 6;
+    static createBoard(playerCount, rowCount, columnsPerPlayer) {
+        rowCount = rowCount || 2 * playerCount;
+        columnsPerPlayer = columnsPerPlayer || 8;
+        const columnCount = columnsPerPlayer * playerCount;
         const nextIndex = Boards.IndexStack.pop() || Boards.Counter++;
         Boards.PlayerCounts[nextIndex] = playerCount;
         Boards.ColumnCounts[nextIndex] = columnCount;
@@ -14,12 +15,17 @@ class Boards {
         for (let i = 0; i < playerCount; i++) {
             tempArray[i] = Players.createPlayer(nextIndex, `Team ${i + 1}`, `hsl(${i * colorIncrement}, 55%, 40%)`);
         }
-        Boards.Players[nextIndex] = tempArray;
+        Boards.PlayerIndices[nextIndex] = tempArray;
         tempArray = new Array(columnCount * rowCount);
         for (let i = 0; i < tempArray.length; i++) {
             tempArray[i] = Tiles.createTile(nextIndex);
         }
-        Boards.Tiles[nextIndex] = tempArray;
+        Boards.TileIndices[nextIndex] = tempArray;
+        let tempMap = new Map();
+        for (let i = 0; i < playerCount; i++) {
+            tempMap.set(i, true);
+        }
+        Boards.MoatIDs[nextIndex] = tempMap;
         return nextIndex;
     }
     static removeBoard(boardIndex) {
@@ -29,14 +35,15 @@ class Boards {
         delete Boards.PlayerCounts[boardIndex];
         delete Boards.ColumnCounts[boardIndex];
         delete Boards.RowCounts[boardIndex];
-        delete Boards.Players[boardIndex];
-        delete Boards.Tiles[boardIndex];
+        delete Boards.PlayerIndices[boardIndex];
+        delete Boards.TileIndices[boardIndex];
+        delete Boards.MoatIDs[boardIndex];
     }
     static setPiece(pieceType, playerID, boardIndex, tileID) {
-        const playerIndex = Boards.Players[boardIndex][playerID];
+        const playerIndex = Boards.PlayerIndices[boardIndex][playerID];
         const pieceIndex = Pieces.createPiece(pieceType, playerIndex);
         Players.Pieces[playerIndex].push(pieceIndex);
-        const tileIndex = Boards.Tiles[boardIndex][tileID];
+        const tileIndex = Boards.TileIndices[boardIndex][tileID];
         Tiles.Occupations[tileIndex] = pieceIndex;
         return pieceIndex;
     }
@@ -44,8 +51,9 @@ class Boards {
 Boards.PlayerCounts = [];
 Boards.ColumnCounts = [];
 Boards.RowCounts = [];
-Boards.Players = [];
-Boards.Tiles = [];
+Boards.PlayerIndices = [];
+Boards.TileIndices = [];
+Boards.MoatIDs = [];
 Boards.Counter = 0;
 Boards.IndexStack = [];
 export default Boards;

@@ -10,13 +10,15 @@ class Boards {
 
     public static PlayerIndices: Array<Array<number>> = [];
     public static TileIndices: Array<Array<number>> = [];
+    public static MoatIDs: Array<Map<number, boolean>> = [];
 
     private static Counter: number = 0;
     private static IndexStack: Array<number> = [];
 
-    public static createBoard(playerCount: number, columnCount?: number, rowCount?: number): number {
-        columnCount = columnCount || 8*playerCount;
-        rowCount = rowCount || 6;
+    public static createBoard(playerCount: number, rowCount?: number, columnsPerPlayer?: number): number {
+        rowCount = rowCount || 2*playerCount;
+        columnsPerPlayer = columnsPerPlayer || 8;
+        const columnCount = columnsPerPlayer*playerCount;
 
         const nextIndex: number = Boards.IndexStack.pop() || Boards.Counter++;
 
@@ -37,6 +39,12 @@ class Boards {
         }
         Boards.TileIndices[nextIndex] = tempArray;
 
+        let tempMap: Map<number, boolean> = new Map();
+        for (let i = 0; i < playerCount; i++) {
+            tempMap.set(i, true);
+        }
+        Boards.MoatIDs[nextIndex] = tempMap;
+
         return nextIndex;
     }
 
@@ -51,6 +59,7 @@ class Boards {
 
         delete Boards.PlayerIndices[boardIndex];
         delete Boards.TileIndices[boardIndex];
+        delete Boards.MoatIDs[boardIndex];
     }
 
     public static setPiece(pieceType: PieceTypes, playerID: number, boardIndex: number, tileID: number): number {

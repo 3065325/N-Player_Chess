@@ -5,6 +5,7 @@ class Players {
         Players.Pieces[nextIndex] = [];
         Players.Names[nextIndex] = name;
         Players.Colors[nextIndex] = color;
+        Players.IsDead[nextIndex] = false;
         return nextIndex;
     }
     static removePlayer(playerIndex) {
@@ -15,12 +16,14 @@ class Players {
         delete Players.Pieces[playerIndex];
         delete Players.Names[playerIndex];
         delete Players.Colors[playerIndex];
+        delete Players.IsDead[playerIndex];
     }
 }
 Players.BoardIndexes = [];
 Players.Pieces = [];
 Players.Names = [];
 Players.Colors = [];
+Players.IsDead = [];
 Players.Counter = 0;
 Players.IndexStack = [];
 export default Players;
