@@ -11,6 +11,7 @@ class Boards {
     public static PlayerIndices: Array<Array<number>> = [];
     public static TileIndices: Array<Array<number>> = [];
     public static MoatIDs: Array<Map<number, boolean>> = [];
+    public static CreekIDs: Array<Map<number, boolean>> = [];
 
     private static Counter: number = 0;
     private static IndexStack: Array<number> = [];
@@ -29,7 +30,7 @@ class Boards {
         let tempArray: Array<number> = new Array(playerCount);
         const colorIncrement: number = 360/playerCount;
         for (let i = 0; i < playerCount; i++) {
-            tempArray[i] = Players.createPlayer(nextIndex, `Team ${i + 1}`, `hsl(${i*colorIncrement}, 55%, 40%)`);
+            tempArray[i] = Players.createPlayer(nextIndex, `Team ${i + 1}`/*, `hsl(${i*colorIncrement}, 55%, 40%)`*/);
         }
         Boards.PlayerIndices[nextIndex] = tempArray;
 
@@ -44,6 +45,12 @@ class Boards {
             tempMap.set(i, true);
         }
         Boards.MoatIDs[nextIndex] = tempMap;
+
+        tempMap = new Map();
+        for (let i = 0; i < playerCount; i++) {
+            //tempMap.set(i, true);
+        }
+        Boards.CreekIDs[nextIndex] = tempMap;
 
         return nextIndex;
     }
@@ -60,6 +67,7 @@ class Boards {
         delete Boards.PlayerIndices[boardIndex];
         delete Boards.TileIndices[boardIndex];
         delete Boards.MoatIDs[boardIndex];
+        delete Boards.CreekIDs[boardIndex];
     }
 
     public static setPiece(pieceType: PieceTypes, playerID: number, boardIndex: number, tileID: number): number {

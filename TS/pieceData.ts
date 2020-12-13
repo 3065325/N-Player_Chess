@@ -4,15 +4,20 @@ enum PieceTypes {
 
 interface dataInterface {
     points: number,
-    trackMoved: boolean,
-    trackCrossed: boolean
+    crossesCreeks: boolean,
+    movesContinuously: boolean,
+    storeMoved: boolean,
+    storeCrossed: boolean
 }
 
 const PieceData: Array<dataInterface> = [];
+
 PieceData[PieceTypes.Pawn] = {
     points: 1,
-    trackMoved: false,
-    trackCrossed: true
+    crossesCreeks: false,
+    movesContinuously: false,
+    storeMoved: false,
+    storeCrossed: true
 };
 
 export {PieceTypes, dataInterface, PieceData};

@@ -13,7 +13,7 @@ class Boards {
         let tempArray = new Array(playerCount);
         const colorIncrement = 360 / playerCount;
         for (let i = 0; i < playerCount; i++) {
-            tempArray[i] = Players.createPlayer(nextIndex, `Team ${i + 1}`, `hsl(${i * colorIncrement}, 55%, 40%)`);
+            tempArray[i] = Players.createPlayer(nextIndex, `Team ${i + 1}`);
         }
         Boards.PlayerIndices[nextIndex] = tempArray;
         tempArray = new Array(columnCount * rowCount);
@@ -26,6 +26,10 @@ class Boards {
             tempMap.set(i, true);
         }
         Boards.MoatIDs[nextIndex] = tempMap;
+        tempMap = new Map();
+        for (let i = 0; i < playerCount; i++) {
+        }
+        Boards.CreekIDs[nextIndex] = tempMap;
         return nextIndex;
     }
     static removeBoard(boardIndex) {
@@ -38,6 +42,7 @@ class Boards {
         delete Boards.PlayerIndices[boardIndex];
         delete Boards.TileIndices[boardIndex];
         delete Boards.MoatIDs[boardIndex];
+        delete Boards.CreekIDs[boardIndex];
     }
     static setPiece(pieceType, playerID, boardIndex, tileID) {
         const playerIndex = Boards.PlayerIndices[boardIndex][playerID];
@@ -54,6 +59,7 @@ Boards.RowCounts = [];
 Boards.PlayerIndices = [];
 Boards.TileIndices = [];
 Boards.MoatIDs = [];
+Boards.CreekIDs = [];
 Boards.Counter = 0;
 Boards.IndexStack = [];
 export default Boards;

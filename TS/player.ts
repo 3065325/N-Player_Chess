@@ -5,20 +5,18 @@ class Players {
     public static Pieces: Array<Array<number>> = [];
 
     public static Names: Array<string> = [];
-    public static Colors: Array<string> = [];
     public static IsDead: Array<boolean> = [];
 
     private static Counter: number = 0;
     private static IndexStack: Array<number> = [];
 
-    public static createPlayer(boardIndex: number, name: string, color: string): number {
+    public static createPlayer(boardIndex: number, name: string): number {
         const nextIndex: number = Players.IndexStack.pop() || Players.Counter++;
 
         Players.BoardIndexes[nextIndex] = boardIndex;
         Players.Pieces[nextIndex] = [];
 
         Players.Names[nextIndex] = name;
-        Players.Colors[nextIndex] = color;
         Players.IsDead[nextIndex] = false;
 
         return nextIndex;
@@ -33,7 +31,6 @@ class Players {
         delete Players.Pieces[playerIndex];
         
         delete Players.Names[playerIndex];
-        delete Players.Colors[playerIndex];
         delete Players.IsDead[playerIndex];
     }
 }

@@ -5,8 +5,6 @@ const mod = (a, b) => { return (a % b + b) % b; };
 const floor = Math.floor;
 const cos = Math.cos;
 const sin = Math.sin;
-class Renderer {
-}
 class BoardService {
     static createBoard(center, innerRadius, outerRadius, colors, playerCount, rowCount, columnsPerPlayer) {
         const boardIndex = Boards.createBoard(playerCount, rowCount, columnsPerPlayer);
@@ -48,9 +46,8 @@ class BoardService {
                 c.beginPath();
                 const angle = j * angleIncrement;
                 const nextAngle = (j + 1) * angleIncrement;
-                c.strokeStyle = colors[(i + j) % 2];
-                if (i === j)
-                    c.strokeStyle = "#ff0000";
+                const tileExists = Boards.TileIndices[boardIndex][j + i * columnCount] !== undefined;
+                c.strokeStyle = tileExists ? colors[(i + j) % 2] : "#000000";
                 c.arc(center[0], center[1], radius, -(offsetAngle + angle - PI / 2), -(offsetAngle + nextAngle - PI / 2), true);
                 c.stroke();
             }
@@ -70,5 +67,11 @@ BoardService.Centers = [];
 BoardService.InnerRadii = [];
 BoardService.OuterRadii = [];
 BoardService.Colors = [];
+class PieceService {
+}
+PieceService.Positions = [];
+class PlayerService {
+}
+PlayerService.Colors = [];
 export default BoardService;
 //# sourceMappingURL=renderService.js.map

@@ -6,9 +6,10 @@ class Pieces {
         Pieces.PieceTypes[nextIndex] = pieceType;
         Pieces.PlayerIndices[nextIndex] = playerIndex;
         Pieces.Points[nextIndex] = pieceData.points;
-        if (pieceData.trackMoved !== undefined)
+        Pieces.CrossesCreeks[nextIndex] = pieceData.crossesCreeks;
+        if (pieceData.storeMoved !== undefined)
             Pieces.HasMoved.set(nextIndex, false);
-        if (pieceData.trackCrossed !== undefined)
+        if (pieceData.storeCrossed !== undefined)
             Pieces.HasCrossed.set(nextIndex, false);
         return nextIndex;
     }
@@ -19,6 +20,7 @@ class Pieces {
         delete Pieces.PieceTypes[pieceIndex];
         delete Pieces.PlayerIndices[pieceIndex];
         delete Pieces.Points[pieceIndex];
+        delete Pieces.CrossesCreeks[pieceIndex];
         Pieces.HasMoved.delete(pieceIndex);
         Pieces.HasCrossed.delete(pieceIndex);
     }
@@ -26,6 +28,7 @@ class Pieces {
 Pieces.PieceTypes = [];
 Pieces.PlayerIndices = [];
 Pieces.Points = [];
+Pieces.CrossesCreeks = [];
 Pieces.HasMoved = new Map();
 Pieces.HasCrossed = new Map();
 Pieces.Counter = 0;

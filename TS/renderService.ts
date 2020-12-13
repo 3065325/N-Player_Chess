@@ -11,10 +11,6 @@ const floor: (x: number) => number = Math.floor;
 const cos: (x: number) => number = Math.cos;
 const sin: (x: number) => number = Math.sin;
 
-class Renderer {
-    
-}
-
 class BoardService {
     public static Centers: Array<Vector2D> = [];
     public static InnerRadii: Array<number> = [];
@@ -72,8 +68,9 @@ class BoardService {
                 const angle: number = j*angleIncrement;
                 const nextAngle: number = (j + 1)*angleIncrement;
 
-                c.strokeStyle = colors[(i + j) % 2];
-                if (i === j) c.strokeStyle = "#ff0000";
+                const tileExists: boolean = Boards.TileIndices[boardIndex][j + i*columnCount] !== undefined;
+                c.strokeStyle = tileExists ? colors[(i + j) % 2] : "#000000";
+                // if (i === j) c.strokeStyle = "#ff0000";
 
                 c.arc(center[0], center[1], radius, -(offsetAngle + angle - PI/2), -(offsetAngle + nextAngle - PI/2), true);
                 c.stroke();
@@ -92,6 +89,14 @@ class BoardService {
             }
         }
     }
+}
+
+class PieceService {
+    public static Positions: Array<Vector2D> = [];
+}
+
+class PlayerService {
+    public static Colors: Array<string> = [];
 }
 
 export default BoardService;

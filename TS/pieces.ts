@@ -5,6 +5,7 @@ class Pieces {
     public static PlayerIndices: Array<number> = [];
     public static Points: Array<number> = [];
 
+    public static CrossesCreeks: Array<boolean> = [];
     public static HasMoved: Map<number, boolean> = new Map();
     public static HasCrossed: Map<number, boolean> = new Map();
 
@@ -19,8 +20,9 @@ class Pieces {
         Pieces.PlayerIndices[nextIndex] = playerIndex;
         Pieces.Points[nextIndex] = pieceData.points;
 
-        if (pieceData.trackMoved !== undefined) Pieces.HasMoved.set(nextIndex, false);
-        if (pieceData.trackCrossed !== undefined) Pieces.HasCrossed.set(nextIndex, false);
+        Pieces.CrossesCreeks[nextIndex] = pieceData.crossesCreeks;
+        if (pieceData.storeMoved !== undefined) Pieces.HasMoved.set(nextIndex, false);
+        if (pieceData.storeCrossed !== undefined) Pieces.HasCrossed.set(nextIndex, false);
 
         return nextIndex;
     }
@@ -34,6 +36,7 @@ class Pieces {
         delete Pieces.PlayerIndices[pieceIndex];
         delete Pieces.Points[pieceIndex];
 
+        delete Pieces.CrossesCreeks[pieceIndex];
         Pieces.HasMoved.delete(pieceIndex);
         Pieces.HasCrossed.delete(pieceIndex);
     }
