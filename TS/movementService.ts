@@ -209,9 +209,7 @@ function possibleMovesUntilAmount(boardIndex: number, tileID: number, playerID: 
         if (nextPieceIndex !== undefined && (Pieces.PlayerIndices[nextPieceIndex] === playerIndex || !isAttacking)) break;
 
         if (reachableTileIDs.indexOf(nextTileID) === -1) reachableTileIDs.push(nextTileID);
-        if (nextPieceIndex === undefined) continue;
-
-        break;
+        if (nextPieceIndex !== undefined) break;
     }
 
     return reachableTileIDs;
@@ -229,7 +227,7 @@ MovementService.PossibleMovesFunctions[PieceTypes.Pawn] = (boardIndex: number, t
     const reachableTileIDs: Array<number> = [];
 
     const sign: number = 1 - 2*+(hasCrossed || false);
-    let nextTileID: number | undefined = MovementService.MoveFunctions[MoveFuncs.moveIn](boardIndex, tileID, sign);
+    let nextTileID: number | undefined = MovementService.MoveFunctions[MoveFuncs.moveIn](boardIndex, tileID, sign*1);
     if (nextTileID === undefined) return reachableTileIDs;
 
     let nextTileIndex: number = Boards.TileIndices[boardIndex][nextTileID];
@@ -239,7 +237,7 @@ MovementService.PossibleMovesFunctions[PieceTypes.Pawn] = (boardIndex: number, t
     reachableTileIDs.push(nextTileID);
     if (hasMoved) return reachableTileIDs;
 
-    nextTileID = MovementService.MoveFunctions[MoveFuncs.moveIn](boardIndex, nextTileID, sign);
+    nextTileID = MovementService.MoveFunctions[MoveFuncs.moveIn](boardIndex, tileID, sign*2);
     if (nextTileID === undefined) return reachableTileIDs;
 
     nextTileIndex = Boards.TileIndices[boardIndex][nextTileID];
@@ -259,6 +257,25 @@ MovementService.PossibleMovesFunctions[PieceTypes.Pawn] = (boardIndex: number, t
 ////////////////////////////////
 ////////////////////////////////
 
+MovementService.PossibleAttacksFunctions[PieceTypes.Pawn] = (boardIndex: number, tileID: number, playerID: number, hasCrossed?: boolean, hasMoved?: boolean): Array<number> => {
+    const reachableTileIDs: Array<number> = [];
 
+    const playerIndex: number = Boards.PlayerIndices[boardIndex][playerID];
+
+    const sign: number = 1 - 2*+(hasCrossed || false);
+    let nextTileID: number | undefined = MovementService.MoveFunctions[MoveFuncs.moveInLeft](boardIndex, tileID, sign*1);
+    if (nextTileID !== undefined && nextTileID !== tileID) {
+        const nextTileIndex: number = Boards.TileIndices[boardIndex][nextTileID];
+        const nextPieceIndex: number | undefined = Tiles.Occupations[nextTileIndex];
+        if (nextPieceIndex === undefined || Pieces.PlayerIndices[nextPieceIndex] !== playerIndex) reachableTileIDs.push(nextTileID);
+    }
+
+    nextTileID = MovementService.MoveFunctions[MoveFuncs.moveInRight](boardIndex, tileID, sign*1);
+    if (nextTileID !== undefined && reachableTileIDs.indexOf(nextTileID) === -1) {
+        const nextTileIndex: number = Boards.TileIndices[boardIndex][nextTileID];
+        const nextPieceIndex: number | undefined = Tiles.Occupations[nextTileIndex];
+        if (nextPieceIndex === undefined || Pieces.PlayerIndices[nextPieceIndex] !== playerIndex) reachableTileIDs.push(nextTileID);
+    }
+}
 
 export default MovementService;

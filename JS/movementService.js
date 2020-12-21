@@ -159,16 +159,15 @@ function possibleMovesUntilAmount(boardIndex, tileID, playerID, moveFuncType, is
             break;
         if (reachableTileIDs.indexOf(nextTileID) === -1)
             reachableTileIDs.push(nextTileID);
-        if (nextPieceIndex === undefined)
-            continue;
-        break;
+        if (nextPieceIndex !== undefined)
+            break;
     }
     return reachableTileIDs;
 }
 MovementService.PossibleMovesFunctions[PieceTypes.Pawn] = (boardIndex, tileID, playerID, isAttacking, hasCrossed, hasMoved) => {
     const reachableTileIDs = [];
     const sign = 1 - 2 * +(hasCrossed || false);
-    let nextTileID = MovementService.MoveFunctions[MoveFuncs.moveIn](boardIndex, tileID, sign);
+    let nextTileID = MovementService.MoveFunctions[MoveFuncs.moveIn](boardIndex, tileID, sign * 1);
     if (nextTileID === undefined)
         return reachableTileIDs;
     let nextTileIndex = Boards.TileIndices[boardIndex][nextTileID];
@@ -178,7 +177,7 @@ MovementService.PossibleMovesFunctions[PieceTypes.Pawn] = (boardIndex, tileID, p
     reachableTileIDs.push(nextTileID);
     if (hasMoved)
         return reachableTileIDs;
-    nextTileID = MovementService.MoveFunctions[MoveFuncs.moveIn](boardIndex, nextTileID, sign);
+    nextTileID = MovementService.MoveFunctions[MoveFuncs.moveIn](boardIndex, tileID, sign * 2);
     if (nextTileID === undefined)
         return reachableTileIDs;
     nextTileIndex = Boards.TileIndices[boardIndex][nextTileID];
@@ -187,6 +186,25 @@ MovementService.PossibleMovesFunctions[PieceTypes.Pawn] = (boardIndex, tileID, p
         return reachableTileIDs;
     reachableTileIDs.push(nextTileID);
     return reachableTileIDs;
+};
+MovementService.PossibleAttacksFunctions[PieceTypes.Pawn] = (boardIndex, tileID, playerID, hasCrossed, hasMoved) => {
+    const reachableTileIDs = [];
+    const playerIndex = Boards.PlayerIndices[boardIndex][playerID];
+    const sign = 1 - 2 * +(hasCrossed || false);
+    let nextTileID = MovementService.MoveFunctions[MoveFuncs.moveInLeft](boardIndex, tileID, sign * 1);
+    if (nextTileID !== undefined && nextTileID !== tileID) {
+        const nextTileIndex = Boards.TileIndices[boardIndex][nextTileID];
+        const nextPieceIndex = Tiles.Occupations[nextTileIndex];
+        if (nextPieceIndex === undefined || Pieces.PlayerIndices[nextPieceIndex] !== playerIndex)
+            reachableTileIDs.push(nextTileID);
+    }
+    nextTileID = MovementService.MoveFunctions[MoveFuncs.moveInRight](boardIndex, tileID, sign * 1);
+    if (nextTileID !== undefined && reachableTileIDs.indexOf(nextTileID) === -1) {
+        const nextTileIndex = Boards.TileIndices[boardIndex][nextTileID];
+        const nextPieceIndex = Tiles.Occupations[nextTileIndex];
+        if (nextPieceIndex === undefined || Pieces.PlayerIndices[nextPieceIndex] !== playerIndex)
+            reachableTileIDs.push(nextTileID);
+    }
 };
 export default MovementService;
 //# sourceMappingURL=movementService.js.map
