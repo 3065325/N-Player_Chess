@@ -276,6 +276,8 @@ MovementService.PossibleAttacksFunctions[PieceTypes.Pawn] = (boardIndex: number,
         const nextPieceIndex: number | undefined = Tiles.Occupations[nextTileIndex];
         if (nextPieceIndex === undefined || Pieces.PlayerIndices[nextPieceIndex] !== playerIndex) reachableTileIDs.push(nextTileID);
     }
+
+    return reachableTileIDs;
 }
 
 export default MovementService;

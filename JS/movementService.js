@@ -205,6 +205,7 @@ MovementService.PossibleAttacksFunctions[PieceTypes.Pawn] = (boardIndex, tileID,
         if (nextPieceIndex === undefined || Pieces.PlayerIndices[nextPieceIndex] !== playerIndex)
             reachableTileIDs.push(nextTileID);
     }
+    return reachableTileIDs;
 };
 export default MovementService;
 //# sourceMappingURL=movementService.js.map
