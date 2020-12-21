@@ -35,8 +35,8 @@ function includesTuple(array: Array<any>, tuple: Array<any>): boolean {
 }
 
 type MoveFunc = (boardIndex: number, tileID: number, amount: number) => number | undefined;
-type PossibleMovesFunc = Array<(boardIndex: number, tileID: number, playerID: number, isAttacking: boolean, hasCrossed?: boolean, hasMoved?: boolean) => Array<number>>;
-type PossibleAttacksFunc = Array<((boardIndex: number, tileID: number, playerID: number, hasCrossed?: boolean, hasMoved?: boolean) => Array<number>) | undefined>;
+type PossibleMovesFunc = Array<(boardIndex: number, tileID: number, hasCrossed?: boolean, hasMoved?: boolean) => Array<number>>;
+type PossibleAttacksFunc = Array<((boardIndex: number, tileID: number, playerID: number, hasCrossed?: boolean, hasMoved?: boolean) => Array<number>)>;
 
 class MovementService {
     public static MoveFunctions: Array<MoveFunc> = [];
@@ -44,15 +44,13 @@ class MovementService {
     public static PossibleMovesFunctions: PossibleMovesFunc = [];
     public static PossibleAttacksFunctions: PossibleAttacksFunc = [];
 
-    public static getPossibleMovesFunction(boardIndex: number, tileID: number, playerID: number, pieceType: PieceTypes, isAttacking: boolean, hasCrossed?: boolean, hasMoved?: boolean): Array<number> {
-        return MovementService.PossibleMovesFunctions[pieceType](boardIndex, tileID, playerID, isAttacking, hasCrossed, hasMoved);
+    public static getPossibleMovesFunction(boardIndex: number, tileID: number, pieceType: PieceTypes, hasCrossed?: boolean, hasMoved?: boolean): Array<number> {
+        return MovementService.PossibleMovesFunctions[pieceType](boardIndex, tileID, hasCrossed, hasMoved);
     }
 
     public static getPossibleAttacksFunction(boardIndex: number, tileID: number, playerID: number, pieceType: PieceTypes, hasCrossed?: boolean, hasMoved?: boolean): Array<number> {
         const possibleAttacksFunction = MovementService.PossibleAttacksFunctions[pieceType];
-        if (possibleAttacksFunction !== undefined) return possibleAttacksFunction(boardIndex, tileID, playerID, hasCrossed, hasMoved);
-
-        return MovementService.PossibleMovesFunctions[pieceType](boardIndex, tileID, playerID, true, hasCrossed, hasMoved);
+        return possibleAttacksFunction(boardIndex, tileID, playerID, hasCrossed, hasMoved);
     }
 
     public static getMoatIDs(boardIndex: number, sector0ID: number, sector1ID: number): Array<number> {
@@ -191,8 +189,91 @@ MovementService.MoveFunctions[MoveFuncs.moveInLeft] = (boardIndex: number, tileI
     return mod(tileT + rowDelta - moveT, columnCount) + (maxRow - moveR)*columnCount;
 }
 
-function possibleMovesUntilAmount(boardIndex: number, tileID: number, playerID: number, moveFuncType: MoveFuncs, isAttacking: boolean, amount: number): Array<number> {
+////////////////////////////////
+////////////////////////////////
+//                            //
+//  Possible Moves Functions  //
+//                            //
+////////////////////////////////
+////////////////////////////////
+
+function continuousMovesUntilAmount(boardIndex: number, tileID: number, moveFuncType: MoveFuncs, amount: number): Array<number> {
     const reachableTileIDs: Array<number> = [];
+
+    const moveFunc: MoveFunc = MovementService.MoveFunctions[moveFuncType];
+
+    const iterationAmount: number = Math.abs(amount);
+    const sign: number = Math.sign(amount);
+
+    for (let i = 1; i < iterationAmount; i++) {
+        const nextTileID: number | undefined = moveFunc(boardIndex, tileID, sign*i);
+        if (nextTileID === undefined) break;
+
+        if (reachableTileIDs.indexOf(nextTileID) !== -1) continue;
+
+        const nextTileIndex: number = Boards.TileIndices[boardIndex][nextTileID];
+        const nextPieceIndex: number | undefined = Tiles.Occupations[nextTileIndex];
+        if (nextPieceIndex !== undefined) break;
+
+        reachableTileIDs.push(nextTileID);
+    }
+
+    return reachableTileIDs;
+}
+
+MovementService.PossibleMovesFunctions[PieceTypes.Pawn] = (boardIndex: number, tileID: number, hasCrossed?: boolean, hasMoved?: boolean): Array<number> => {
+    const reachableTileIDs: Array<number> = [];
+
+    const sign: number = 1 - 2*+(hasCrossed || false);
+
+    for (let i = 1; i <= 1 + +!hasMoved; i++) {
+        const nextTileID: number | undefined = MovementService.MoveFunctions[MoveFuncs.moveIn](boardIndex, tileID, sign*i);
+        if (nextTileID === undefined) break;
+
+        const nextTileIndex: number = Boards.TileIndices[boardIndex][nextTileID];
+        const nextPieceIndex: number | undefined = Tiles.Occupations[nextTileIndex];
+        if (nextPieceIndex !== undefined) break;
+
+        reachableTileIDs.push(nextTileID);
+    }
+
+    return reachableTileIDs;
+}
+
+MovementService.PossibleMovesFunctions[PieceTypes.King] = (boardIndex: number, tileID: number, hasCrossed?: boolean, hasMoved?: boolean): Array<number> => {
+    const reachableTileIDs: Array<number> = [];
+
+    const backFrontCheck = (moveFuncIndex: MoveFuncs) => {
+        for (let i = -1; i <= 1; i += 2) {
+            const nextTileID: number | undefined = MovementService.MoveFunctions[moveFuncIndex](boardIndex, tileID, i);
+            if (nextTileID === undefined || reachableTileIDs.indexOf(nextTileID) !== -1) continue;
+
+            const nextTileIndex: number = Boards.TileIndices[boardIndex][nextTileID];
+            const nextPieceIndex: number | undefined = Tiles.Occupations[nextTileIndex];
+            if (nextPieceIndex !== undefined) continue;
+
+            reachableTileIDs.push(nextTileID);
+        }
+    }
+
+    backFrontCheck(MoveFuncs.moveIn);
+    backFrontCheck(MoveFuncs.moveRight);
+    backFrontCheck(MoveFuncs.moveInLeft);
+    backFrontCheck(MoveFuncs.moveInRight);
+
+    return reachableTileIDs;
+}
+
+////////////////////////////////
+////////////////////////////////
+//                            //
+// Possible Attacks Functions //
+//                            //
+////////////////////////////////
+////////////////////////////////
+
+function continuousAttackUntilAmount(boardIndex: number, tileID: number, playerID: number, moveFuncType: MoveFuncs, amount: number): number | undefined {
+    let reachableTileID: number | undefined;
 
     const playerIndex: number = Boards.PlayerIndices[boardIndex][playerID];
     const moveFunc: MoveFunc = MovementService.MoveFunctions[moveFuncType];
@@ -206,76 +287,60 @@ function possibleMovesUntilAmount(boardIndex: number, tileID: number, playerID: 
 
         const nextTileIndex: number = Boards.TileIndices[boardIndex][nextTileID];
         const nextPieceIndex: number | undefined = Tiles.Occupations[nextTileIndex];
-        if (nextPieceIndex !== undefined && (Pieces.PlayerIndices[nextPieceIndex] === playerIndex || !isAttacking)) break;
+        if (nextPieceIndex === undefined) continue;
 
-        if (reachableTileIDs.indexOf(nextTileID) === -1) reachableTileIDs.push(nextTileID);
-        if (nextPieceIndex !== undefined) break;
+        if (Pieces.PlayerIndices[nextPieceIndex] === playerID) break;
+
+        reachableTileID = nextTileID;
+        break;
     }
 
-    return reachableTileIDs;
+    return reachableTileID;
 }
-
-////////////////////////////////
-////////////////////////////////
-//                            //
-//  Possible Moves Functions  //
-//                            //
-////////////////////////////////
-////////////////////////////////
-
-MovementService.PossibleMovesFunctions[PieceTypes.Pawn] = (boardIndex: number, tileID: number, playerID: number, isAttacking: boolean, hasCrossed?: boolean, hasMoved?: boolean): Array<number> => {
-    const reachableTileIDs: Array<number> = [];
-
-    const sign: number = 1 - 2*+(hasCrossed || false);
-    let nextTileID: number | undefined = MovementService.MoveFunctions[MoveFuncs.moveIn](boardIndex, tileID, sign*1);
-    if (nextTileID === undefined) return reachableTileIDs;
-
-    let nextTileIndex: number = Boards.TileIndices[boardIndex][nextTileID];
-    let nextPieceIndex: number | undefined = Tiles.Occupations[nextTileIndex];
-    if (nextPieceIndex !== undefined) return reachableTileIDs;
-
-    reachableTileIDs.push(nextTileID);
-    if (hasMoved) return reachableTileIDs;
-
-    nextTileID = MovementService.MoveFunctions[MoveFuncs.moveIn](boardIndex, tileID, sign*2);
-    if (nextTileID === undefined) return reachableTileIDs;
-
-    nextTileIndex = Boards.TileIndices[boardIndex][nextTileID];
-    nextPieceIndex = Tiles.Occupations[nextTileIndex];
-    if (nextPieceIndex !== undefined) return reachableTileIDs;
-
-    reachableTileIDs.push(nextTileID);
-
-    return reachableTileIDs;
-}
-
-////////////////////////////////
-////////////////////////////////
-//                            //
-//      Attack Functions      //
-//                            //
-////////////////////////////////
-////////////////////////////////
 
 MovementService.PossibleAttacksFunctions[PieceTypes.Pawn] = (boardIndex: number, tileID: number, playerID: number, hasCrossed?: boolean, hasMoved?: boolean): Array<number> => {
     const reachableTileIDs: Array<number> = [];
 
     const playerIndex: number = Boards.PlayerIndices[boardIndex][playerID];
-
     const sign: number = 1 - 2*+(hasCrossed || false);
-    let nextTileID: number | undefined = MovementService.MoveFunctions[MoveFuncs.moveInLeft](boardIndex, tileID, sign*1);
-    if (nextTileID !== undefined && nextTileID !== tileID) {
+
+    const frontCheck = (moveFuncIndex: MoveFuncs) => {
+        const nextTileID: number | undefined = MovementService.MoveFunctions[moveFuncIndex](boardIndex, tileID, sign);
+        if (nextTileID === undefined || nextTileID === tileID) return;
+
         const nextTileIndex: number = Boards.TileIndices[boardIndex][nextTileID];
         const nextPieceIndex: number | undefined = Tiles.Occupations[nextTileIndex];
-        if (nextPieceIndex === undefined || Pieces.PlayerIndices[nextPieceIndex] !== playerIndex) reachableTileIDs.push(nextTileID);
+        if (nextPieceIndex === undefined || Pieces.PlayerIndices[nextPieceIndex] === playerIndex) return;
+
+        reachableTileIDs.push(nextTileID);
     }
 
-    nextTileID = MovementService.MoveFunctions[MoveFuncs.moveInRight](boardIndex, tileID, sign*1);
-    if (nextTileID !== undefined && reachableTileIDs.indexOf(nextTileID) === -1) {
-        const nextTileIndex: number = Boards.TileIndices[boardIndex][nextTileID];
-        const nextPieceIndex: number | undefined = Tiles.Occupations[nextTileIndex];
-        if (nextPieceIndex === undefined || Pieces.PlayerIndices[nextPieceIndex] !== playerIndex) reachableTileIDs.push(nextTileID);
+    frontCheck(MoveFuncs.moveInLeft);
+    frontCheck(MoveFuncs.moveInRight);
+
+    return reachableTileIDs;
+}
+
+MovementService.PossibleAttacksFunctions[PieceTypes.King] = (boardIndex: number, tileID: number, playerID: number, hasCrossed?: boolean, hasMoved?: boolean): Array<number> => {
+    const reachableTileIDs: Array<number> = [];
+
+    const backFrontCheck = (moveFuncIndex: MoveFuncs) => {
+        for (let i = -1; i <= 1; i += 2) {
+            const nextTileID: number | undefined = MovementService.MoveFunctions[moveFuncIndex](boardIndex, tileID, i);
+            if (nextTileID === undefined || reachableTileIDs.indexOf(nextTileID) !== -1) continue;
+
+            const nextTileIndex: number = Boards.TileIndices[boardIndex][nextTileID];
+            const nextPieceIndex: number | undefined = Tiles.Occupations[nextTileIndex];
+            if (nextPieceIndex === undefined || Pieces.PlayerIndices[nextPieceIndex] === playerID) continue;
+
+            reachableTileIDs.push(nextTileID);
+        }
     }
+
+    backFrontCheck(MoveFuncs.moveIn);
+    backFrontCheck(MoveFuncs.moveRight);
+    backFrontCheck(MoveFuncs.moveInLeft);
+    backFrontCheck(MoveFuncs.moveInRight);
 
     return reachableTileIDs;
 }

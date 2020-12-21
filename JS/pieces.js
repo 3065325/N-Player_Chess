@@ -7,9 +7,9 @@ class Pieces {
         Pieces.PlayerIndices[nextIndex] = playerIndex;
         Pieces.Points[nextIndex] = pieceData.points;
         Pieces.CrossesCreeks[nextIndex] = pieceData.crossesCreeks;
-        if (pieceData.storeMoved !== undefined)
+        if (pieceData.storeMoved === true)
             Pieces.HasMoved.set(nextIndex, false);
-        if (pieceData.storeCrossed !== undefined)
+        if (pieceData.storeCrossed === true)
             Pieces.HasCrossed.set(nextIndex, false);
         return nextIndex;
     }

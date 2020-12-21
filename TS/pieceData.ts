@@ -7,7 +7,9 @@ interface dataInterface {
 }
 
 enum PieceTypes {
-    Pawn = 0
+    Pawn = 0,
+    Rook,
+    King
 }
 
 const PieceData: Array<dataInterface> = [];
@@ -18,6 +20,22 @@ PieceData[PieceTypes.Pawn] = {
     movesContinuously: false,
     storeMoved: false,
     storeCrossed: true
+};
+
+PieceData[PieceTypes.Rook] = {
+    points: 8,
+    crossesCreeks: true,
+    movesContinuously: true,
+    storeMoved: false,
+    storeCrossed: false
+};
+
+PieceData[PieceTypes.King] = {
+    points: 20,
+    crossesCreeks: true,
+    movesContinuously: false,
+    storeMoved: false,
+    storeCrossed: false
 };
 
 export {PieceTypes, dataInterface, PieceData};

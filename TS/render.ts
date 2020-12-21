@@ -9,7 +9,16 @@ const mod: (a: number, b: number) => number = (a, b) => { return (a % b + b) % b
 const board1: number = BoardService.createBoard([0*vw, 0*vh], 20*vh, 50*vh, ["#F5D293", "#985130"], 2);
 console.log(board1, Boards.ColumnCounts[board1], Boards.RowCounts[board1], Boards.PlayerIndices[board1], Boards.TileIndices[board1]);
 
-console.log(MovementService.getPossibleMovesFunction(board1, 0, 0, PieceTypes.Pawn, false, false, false));
+const tileID: number = 34;
+const playerID: number = 0;
+const hasCrossed: boolean = false;
+const hasMoved: boolean = false;
+
+//Boards.setPiece(board1, MovementService.MoveFunctions[2](board1, tileID, 1) || tileID, 1, PieceTypes.Pawn);
+Boards.setPiece(board1, MovementService.MoveFunctions[3](board1, tileID, 1) || tileID, 1, PieceTypes.Pawn);
+
+console.log(MovementService.getPossibleMovesFunction(board1, tileID, PieceTypes.King, hasCrossed, hasMoved));
+console.log(MovementService.getPossibleAttacksFunction(board1, tileID, playerID, PieceTypes.King, hasCrossed, hasMoved));
 
 const render: boolean = true//false//
 if (render) {

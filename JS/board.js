@@ -44,7 +44,7 @@ class Boards {
         delete Boards.MoatIDs[boardIndex];
         delete Boards.CreekIDs[boardIndex];
     }
-    static setPiece(pieceType, playerID, boardIndex, tileID) {
+    static setPiece(boardIndex, tileID, playerID, pieceType) {
         const playerIndex = Boards.PlayerIndices[boardIndex][playerID];
         const pieceIndex = Pieces.createPiece(pieceType, playerIndex);
         Players.Pieces[playerIndex].push(pieceIndex);

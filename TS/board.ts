@@ -70,7 +70,7 @@ class Boards {
         delete Boards.CreekIDs[boardIndex];
     }
 
-    public static setPiece(pieceType: PieceTypes, playerID: number, boardIndex: number, tileID: number): number {
+    public static setPiece(boardIndex: number, tileID: number, playerID: number, pieceType: PieceTypes): number {
         const playerIndex: number = Boards.PlayerIndices[boardIndex][playerID];
         const pieceIndex: number = Pieces.createPiece(pieceType, playerIndex);
         Players.Pieces[playerIndex].push(pieceIndex);
