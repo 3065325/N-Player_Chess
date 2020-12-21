@@ -48,6 +48,8 @@ class BoardService {
                 const nextAngle = (j + 1) * angleIncrement;
                 const tileExists = Boards.TileIndices[boardIndex][j + i * columnCount] !== undefined;
                 c.strokeStyle = tileExists ? colors[(i + j) % 2] : "#000000";
+                if (i === j)
+                    c.strokeStyle = "#ff0000";
                 c.arc(center[0], center[1], radius, -(offsetAngle + angle - PI / 2), -(offsetAngle + nextAngle - PI / 2), true);
                 c.stroke();
             }

@@ -2,6 +2,10 @@ import Boards from "./board.js";
 import { c } from "./canvas.js";
 import Tiles from "./tile.js";
 
+namespace ree {
+    
+}
+
 type Vector2D = [number, number];
 type Vector2DString = [string, string];
 
@@ -70,7 +74,7 @@ class BoardService {
 
                 const tileExists: boolean = Boards.TileIndices[boardIndex][j + i*columnCount] !== undefined;
                 c.strokeStyle = tileExists ? colors[(i + j) % 2] : "#000000";
-                // if (i === j) c.strokeStyle = "#ff0000";
+                if (i === j) c.strokeStyle = "#ff0000";
 
                 c.arc(center[0], center[1], radius, -(offsetAngle + angle - PI/2), -(offsetAngle + nextAngle - PI/2), true);
                 c.stroke();

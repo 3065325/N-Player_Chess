@@ -1,13 +1,13 @@
-enum PieceTypes {
-    Pawn = 0
-}
-
 interface dataInterface {
     points: number,
     crossesCreeks: boolean,
     movesContinuously: boolean,
     storeMoved: boolean,
     storeCrossed: boolean
+}
+
+enum PieceTypes {
+    Pawn = 0
 }
 
 const PieceData: Array<dataInterface> = [];
