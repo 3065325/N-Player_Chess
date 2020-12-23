@@ -2,10 +2,6 @@ import Boards from "./board.js";
 import { c } from "./canvas.js";
 import Tiles from "./tile.js";
 
-namespace ree {
-    
-}
-
 type Vector2D = [number, number];
 type Vector2DString = [string, string];
 

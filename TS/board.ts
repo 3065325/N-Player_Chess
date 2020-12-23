@@ -3,6 +3,16 @@ import Tiles from "./tile.js";
 import Pieces from "./pieces.js";
 import {PieceTypes} from "./pieceData.js";
 
+function getMoatID(boardIndex: number, tileID: number, getRight?: boolean): number {
+    if (getRight === undefined) getRight = false;
+
+    const rowCount: number = Boards.RowCounts[boardIndex];
+    const columnCount: number = Boards.ColumnCounts[boardIndex];
+    const columnsPerPlayer: number = columnCount / Boards.PlayerCounts[boardIndex];
+
+    return (rowCount - 1)*columnCount + Math.floor((tileID % columnCount)/columnsPerPlayer)*columnsPerPlayer + (columnsPerPlayer - 1)*(+getRight);
+}
+
 class Boards {
     public static PlayerCounts: Array<number> = [];
     public static ColumnCounts: Array<number> = [];
@@ -10,8 +20,8 @@ class Boards {
 
     public static PlayerIndices: Array<Array<number>> = [];
     public static TileIndices: Array<Array<number>> = [];
-    public static MoatIDs: Array<Map<number, boolean>> = [];
-    public static CreekIDs: Array<Map<number, boolean>> = [];
+    public static MoatIDsBridged: Array<Map<number, boolean>> = [];
+    public static CreekIDsBridged: Array<Map<number, boolean>> = [];
 
     private static Counter: number = 0;
     private static IndexStack: Array<number> = [];
@@ -28,9 +38,8 @@ class Boards {
         Boards.RowCounts[nextIndex] = rowCount;
 
         let tempArray: Array<number> = new Array(playerCount);
-        const colorIncrement: number = 360/playerCount;
         for (let i = 0; i < playerCount; i++) {
-            tempArray[i] = Players.createPlayer(nextIndex, `Team ${i + 1}`/*, `hsl(${i*colorIncrement}, 55%, 40%)`*/);
+            tempArray[i] = Players.createPlayer(nextIndex, `Team ${i + 1}`);
         }
         Boards.PlayerIndices[nextIndex] = tempArray;
 
@@ -42,15 +51,15 @@ class Boards {
 
         let tempMap: Map<number, boolean> = new Map();
         for (let i = 0; i < playerCount; i++) {
-            tempMap.set(i, true);
+            tempMap.set(i, false);
         }
-        Boards.MoatIDs[nextIndex] = tempMap;
+        Boards.MoatIDsBridged[nextIndex] = tempMap;
 
         tempMap = new Map();
         for (let i = 0; i < playerCount; i++) {
-            //tempMap.set(i, true);
+            tempMap.set(i, false);
         }
-        Boards.CreekIDs[nextIndex] = tempMap;
+        Boards.CreekIDsBridged[nextIndex] = tempMap;
 
         return nextIndex;
     }
@@ -66,8 +75,8 @@ class Boards {
 
         delete Boards.PlayerIndices[boardIndex];
         delete Boards.TileIndices[boardIndex];
-        delete Boards.MoatIDs[boardIndex];
-        delete Boards.CreekIDs[boardIndex];
+        delete Boards.MoatIDsBridged[boardIndex];
+        delete Boards.CreekIDsBridged[boardIndex];
     }
 
     public static setPiece(boardIndex: number, tileID: number, playerID: number, pieceType: PieceTypes): number {

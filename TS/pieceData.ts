@@ -23,7 +23,7 @@ PieceData[PieceTypes.Pawn] = {
 };
 
 PieceData[PieceTypes.Rook] = {
-    points: 8,
+    points: 5,
     crossesCreeks: true,
     movesContinuously: true,
     storeMoved: false,
@@ -31,7 +31,7 @@ PieceData[PieceTypes.Rook] = {
 };
 
 PieceData[PieceTypes.King] = {
-    points: 20,
+    points: 100,
     crossesCreeks: true,
     movesContinuously: false,
     storeMoved: false,

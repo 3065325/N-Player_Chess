@@ -1,6 +1,14 @@
 import Players from "./player.js";
 import Tiles from "./tile.js";
 import Pieces from "./pieces.js";
+function getMoatID(boardIndex, tileID, getRight) {
+    if (getRight === undefined)
+        getRight = false;
+    const rowCount = Boards.RowCounts[boardIndex];
+    const columnCount = Boards.ColumnCounts[boardIndex];
+    const columnsPerPlayer = columnCount / Boards.PlayerCounts[boardIndex];
+    return (rowCount - 1) * columnCount + Math.floor((tileID % columnCount) / columnsPerPlayer) * columnsPerPlayer + (columnsPerPlayer - 1) * (+getRight);
+}
 class Boards {
     static createBoard(playerCount, rowCount, columnsPerPlayer) {
         rowCount = rowCount || 2 * playerCount;
@@ -11,7 +19,6 @@ class Boards {
         Boards.ColumnCounts[nextIndex] = columnCount;
         Boards.RowCounts[nextIndex] = rowCount;
         let tempArray = new Array(playerCount);
-        const colorIncrement = 360 / playerCount;
         for (let i = 0; i < playerCount; i++) {
             tempArray[i] = Players.createPlayer(nextIndex, `Team ${i + 1}`);
         }
@@ -23,13 +30,14 @@ class Boards {
         Boards.TileIndices[nextIndex] = tempArray;
         let tempMap = new Map();
         for (let i = 0; i < playerCount; i++) {
-            tempMap.set(i, true);
+            tempMap.set(i, false);
         }
-        Boards.MoatIDs[nextIndex] = tempMap;
+        Boards.MoatIDsBridged[nextIndex] = tempMap;
         tempMap = new Map();
         for (let i = 0; i < playerCount; i++) {
+            tempMap.set(i, false);
         }
-        Boards.CreekIDs[nextIndex] = tempMap;
+        Boards.CreekIDsBridged[nextIndex] = tempMap;
         return nextIndex;
     }
     static removeBoard(boardIndex) {
@@ -41,8 +49,8 @@ class Boards {
         delete Boards.RowCounts[boardIndex];
         delete Boards.PlayerIndices[boardIndex];
         delete Boards.TileIndices[boardIndex];
-        delete Boards.MoatIDs[boardIndex];
-        delete Boards.CreekIDs[boardIndex];
+        delete Boards.MoatIDsBridged[boardIndex];
+        delete Boards.CreekIDsBridged[boardIndex];
     }
     static setPiece(boardIndex, tileID, playerID, pieceType) {
         const playerIndex = Boards.PlayerIndices[boardIndex][playerID];
@@ -58,8 +66,8 @@ Boards.ColumnCounts = [];
 Boards.RowCounts = [];
 Boards.PlayerIndices = [];
 Boards.TileIndices = [];
-Boards.MoatIDs = [];
-Boards.CreekIDs = [];
+Boards.MoatIDsBridged = [];
+Boards.CreekIDsBridged = [];
 Boards.Counter = 0;
 Boards.IndexStack = [];
 export default Boards;
