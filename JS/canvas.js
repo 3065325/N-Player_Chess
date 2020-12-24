@@ -7,7 +7,6 @@ canvas.height = window.innerHeight;
 let vw = canvas.width / 100;
 let vh = canvas.height / 100;
 Registry.m = vw;
-Registry.renderDelta = 1 / 60;
 const CanvasUpdate = (CENTER, Color) => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
