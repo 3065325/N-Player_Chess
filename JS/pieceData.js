@@ -33,7 +33,7 @@ PieceData[PieceTypes.Rook] = {
     points: 5,
     crossesCreeks: true,
     attacksContinuously: true,
-    storeMoved: false,
+    storeMoved: true,
     storeCrossed: false
 };
 PieceData[PieceTypes.Queen] = {
@@ -47,7 +47,7 @@ PieceData[PieceTypes.King] = {
     points: 100,
     crossesCreeks: true,
     attacksContinuously: false,
-    storeMoved: false,
+    storeMoved: true,
     storeCrossed: false
 };
 export { PieceTypes, PieceData };

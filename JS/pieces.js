@@ -5,6 +5,7 @@ class Pieces {
         const pieceData = PieceData[pieceType];
         Pieces.PieceTypes[nextIndex] = pieceType;
         Pieces.PlayerIndices[nextIndex] = playerIndex;
+        Pieces.TileIDs[nextIndex] = undefined;
         Pieces.Points[nextIndex] = pieceData.points;
         Pieces.CrossesCreeks[nextIndex] = pieceData.crossesCreeks;
         if (pieceData.storeMoved === true)
@@ -19,6 +20,7 @@ class Pieces {
         Pieces.IndexStack.push(pieceIndex);
         delete Pieces.PieceTypes[pieceIndex];
         delete Pieces.PlayerIndices[pieceIndex];
+        delete Pieces.TileIDs[pieceIndex];
         delete Pieces.Points[pieceIndex];
         delete Pieces.CrossesCreeks[pieceIndex];
         Pieces.HasMoved.delete(pieceIndex);
@@ -27,6 +29,7 @@ class Pieces {
 }
 Pieces.PieceTypes = [];
 Pieces.PlayerIndices = [];
+Pieces.TileIDs = [];
 Pieces.Points = [];
 Pieces.CrossesCreeks = [];
 Pieces.HasMoved = new Map();

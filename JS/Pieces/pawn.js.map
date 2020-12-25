@@ -1,1 +1,0 @@
-{"version":3,"file":"pawn.js","sourceRoot":"","sources":["../../TS/Pieces/pawn.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,SAAS,EAAE,UAAU,EAAE,MAAM,cAAc,CAAC;AAErD,SAAS,CAAC,UAAU,CAAC,IAAI,CAAC,GAAG;IACzB,MAAM,EAAE,CAAC;IACT,aAAa,EAAE,KAAK;IACpB,iBAAiB,EAAE,KAAK;IACxB,UAAU,EAAE,KAAK;IACjB,YAAY,EAAE,IAAI;CACrB,CAAC"}

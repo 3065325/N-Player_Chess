@@ -3,6 +3,7 @@ import {dataInterface, PieceData, PieceTypes} from "./pieceData.js";
 class Pieces {
     public static PieceTypes: Array<number> = [];
     public static PlayerIndices: Array<number> = [];
+    public static TileIDs: Array<number | undefined> = [];
     public static Points: Array<number> = [];
 
     public static CrossesCreeks: Array<boolean> = [];
@@ -18,6 +19,7 @@ class Pieces {
         const pieceData: dataInterface = PieceData[pieceType];
         Pieces.PieceTypes[nextIndex] = pieceType;
         Pieces.PlayerIndices[nextIndex] = playerIndex;
+        Pieces.TileIDs[nextIndex] = undefined;
         Pieces.Points[nextIndex] = pieceData.points;
 
         Pieces.CrossesCreeks[nextIndex] = pieceData.crossesCreeks;
@@ -34,6 +36,7 @@ class Pieces {
 
         delete Pieces.PieceTypes[pieceIndex];
         delete Pieces.PlayerIndices[pieceIndex];
+        delete Pieces.TileIDs[pieceIndex];
         delete Pieces.Points[pieceIndex];
 
         delete Pieces.CrossesCreeks[pieceIndex];

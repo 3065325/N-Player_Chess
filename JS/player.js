@@ -1,9 +1,10 @@
 class Players {
-    static createPlayer(boardIndex, name) {
+    static createPlayer(boardIndex) {
         const nextIndex = Players.IndexStack.pop() || Players.Counter++;
-        Players.BoardIndexes[nextIndex] = boardIndex;
+        Players.BoardIndices[nextIndex] = boardIndex;
         Players.Pieces[nextIndex] = [];
-        Players.Names[nextIndex] = name;
+        Players.TakenPieces[nextIndex] = [];
+        Players.InCheckBy[nextIndex] = undefined;
         Players.IsDead[nextIndex] = false;
         return nextIndex;
     }
@@ -11,15 +12,20 @@ class Players {
         if (playerIndex < 0 || playerIndex >= Players.Counter)
             return;
         Players.IndexStack.push(playerIndex);
-        delete Players.BoardIndexes[playerIndex];
+        delete Players.BoardIndices[playerIndex];
         delete Players.Pieces[playerIndex];
-        delete Players.Names[playerIndex];
+        delete Players.TakenPieces[playerIndex];
+        delete Players.InCheckBy[playerIndex];
         delete Players.IsDead[playerIndex];
     }
+    static setPlayerDead(playerIndex, isDead) {
+        Players.IsDead[playerIndex] = isDead;
+    }
 }
-Players.BoardIndexes = [];
+Players.BoardIndices = [];
 Players.Pieces = [];
-Players.Names = [];
+Players.TakenPieces = [];
+Players.InCheckBy = [];
 Players.IsDead = [];
 Players.Counter = 0;
 Players.IndexStack = [];

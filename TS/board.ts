@@ -4,6 +4,12 @@ import Pieces from "./pieces.js";
 import {PieceData, PieceTypes} from "./pieceData.js";
 import MovementService from "./movementService.js";
 
+enum GameState {
+    Starting = 0,
+    Started,
+    Ended
+}
+
 class Boards {
     public static PlayerCounts: Array<number> = [];
     public static ColumnCounts: Array<number> = [];
@@ -13,6 +19,10 @@ class Boards {
     public static PlayerIndices: Array<Array<number>> = [];
     public static TileIndices: Array<Array<number>> = [];
     public static MoatIDsBridged: Array<Map<number, boolean>> = [];
+
+    public static GameStates: Array<GameState> = [];
+    public static CurrentPlayers: Array<number | undefined> = [];
+    public static RemainingPlayers: Array<Array<number>> = [];
 
     private static Counter: number = 0;
     private static IndexStack: Array<number> = [];
@@ -31,7 +41,7 @@ class Boards {
 
         let tempArray: Array<number> = new Array(playerCount);
         for (let i = 0; i < playerCount; i++) {
-            tempArray[i] = Players.createPlayer(nextIndex, `Team ${i + 1}`);
+            tempArray[i] = Players.createPlayer(nextIndex);
         }
         Boards.PlayerIndices[nextIndex] = tempArray;
 
@@ -46,6 +56,10 @@ class Boards {
             tempMap.set(columnCount*(rowCount - 1) + i*columnsPerPlayer, false);
         }
         Boards.MoatIDsBridged[nextIndex] = tempMap;
+
+        Boards.GameStates[nextIndex] = GameState.Started;
+        Boards.CurrentPlayers[nextIndex] = 0;
+        Boards.RemainingPlayers[nextIndex] = Boards.PlayerIndices[nextIndex];
 
         return nextIndex;
     }
@@ -65,24 +79,48 @@ class Boards {
         delete Boards.MoatIDsBridged[boardIndex];
     }
 
+    public static iterateCurrentPlayer(boardIndex: number): void {
+        const playerCount: number = Boards.PlayerCounts[boardIndex];
+        const currentPlayerID: number | undefined = Boards.CurrentPlayers[boardIndex];
+        if (currentPlayerID === undefined) return;
+
+        Boards.CurrentPlayers[boardIndex] = (currentPlayerID + 1) % playerCount;
+    }
+
+    public static eliminatePlayer(boardIndex: number, playerID: number): void {
+        Boards.RemainingPlayers[boardIndex].splice(playerID, 1);
+
+        const playerIndex: number = Boards.PlayerIndices[boardIndex][playerID];
+        Players.IsDead[playerIndex] = true;
+
+        Players.Pieces[playerIndex].forEach((pieceIndex) => {
+            const tileID: number | undefined = Pieces.TileIDs[pieceIndex];
+            if (tileID === undefined) return;
+            
+            clearAttackedTiles(boardIndex, tileID);
+        });
+    }
+
     public static setPiece(boardIndex: number, tileID: number, playerID: number, pieceType: PieceTypes): number {
-        console.log("Setting Piece at tileID:", tileID);
+        // console.log("Setting Piece at tileID:", tileID);
         const playerIndex: number = Boards.PlayerIndices[boardIndex][playerID];
         const pieceIndex: number = Pieces.createPiece(pieceType, playerIndex);
+        Pieces.TileIDs[pieceIndex] = tileID;
         Players.Pieces[playerIndex].push(pieceIndex);
 
         const tileIndex: number = Boards.TileIndices[boardIndex][tileID];
         Tiles.Occupations[tileIndex] = pieceIndex;
 
-        setAttackedTiles(boardIndex, tileID, pieceType, false, false);
+        setAttackedTiles(boardIndex, tileID, playerID, pieceType, false, false);
 
+        // console.log(boardIndex, tileID, playerID, pieceType);
         updateAttackedTiles(boardIndex, tileID);
 
         return pieceIndex;
     }
 
-    public static movePiece(boardIndex: number, tile0ID: number, tile1ID: number): [PieceTypes, number] | undefined {
-        console.log("Moving from tile0ID:", tile0ID, "to tile1ID:", tile1ID);
+    public static movePiece(boardIndex: number, tile0ID: number, tile1ID: number): number | undefined {
+        // console.log("Moving from tile0ID:", tile0ID, "to tile1ID:", tile1ID);
 
         const tile0Index: number = Boards.TileIndices[boardIndex][tile0ID];
         const tile1Index: number = Boards.TileIndices[boardIndex][tile1ID];
@@ -90,44 +128,143 @@ class Boards {
         const piece0Index: number | undefined = Tiles.Occupations[tile0Index];
         if (piece0Index === undefined) return;
 
-        //const piece1Index: number | undefined = Tiles.Occupations[tile1Index];
+        const piece1Index: number | undefined = Tiles.Occupations[tile1Index];
 
-        Tiles.Occupations[tile1Index] = piece0Index;
-        Tiles.Occupations[tile0Index] = undefined;
+        const player0Index: number = Pieces.PlayerIndices[piece0Index];
+        if (piece1Index !== undefined && Pieces.PlayerIndices[piece1Index] === player0Index) return undefined;
 
         const piece0Type: PieceTypes = Pieces.PieceTypes[piece0Index];
-        const piece0HasCrossed: boolean | undefined = Pieces.HasCrossed.get(piece0Index);
-        const piece0HasMoved: boolean | undefined = Pieces.HasMoved.get(piece0Index);
+        if (PieceData[piece0Type].storeMoved) Pieces.HasMoved.set(piece0Index, true);
 
-        clearAttackedTiles(boardIndex, tile0ID);
-        setAttackedTiles(boardIndex, tile1ID, piece0Type, piece0HasCrossed, piece0HasMoved);
+        Tiles.Occupations[tile1Index] = piece0Index;
+
+        Boards.removePiece(boardIndex, tile0ID);
 
         updateAttackedTiles(boardIndex, tile0ID);
         updateAttackedTiles(boardIndex, tile1ID);
 
-        return
+        const sectorID: number = MovementService.getSectorID(boardIndex, tile0ID);
+        const [tile0Row, _] = MovementService.getTileIDRowColumn(boardIndex, tile0ID);
+        if (Boards.PlayerIndices[boardIndex][sectorID] === player0Index && tile0Row === Boards.RowCounts[boardIndex] - 1) {
+            updateMoatBridges(boardIndex, sectorID)
+        
+            for (let i = 0; i < Boards.TileIndices[boardIndex].length; i++) {
+                const tileIndex = Boards.TileIndices[boardIndex][i];
+                if (Tiles.Occupations[tileIndex] === undefined) continue;
+
+                updateAttackedTiles(boardIndex, i);
+            }
+        };
+
+        Pieces.TileIDs[piece0Index] = tile1ID;
+
+        if (piece1Index !== undefined) {
+            Pieces.TileIDs[piece1Index] = undefined;
+            Players.TakenPieces[player0Index].push(piece1Index);
+        }
+
+        return piece1Index;
+    }
+
+    public static removePiece(boardIndex: number, tileID: number): number | undefined {
+        const tileIndex: number = Boards.TileIndices[boardIndex][tileID];
+
+        const pieceIndex: number | undefined = Tiles.Occupations[tileIndex];
+        if (pieceIndex === undefined) return undefined;
+
+        Tiles.Occupations[tileIndex] = undefined;
+
+        clearAttackedTiles(boardIndex, tileID);
+        updateAttackedTiles(boardIndex, tileID,);
+
+        return pieceIndex;
+    }
+
+    public static generateDefault(boardIndex: number): void {
+        const playerCount: number = Boards.PlayerCounts[boardIndex];
+        const columnsPerPlayer: number = Boards.ColumnCountPerPlayers[boardIndex];
+        const columnCount: number = Boards.ColumnCounts[boardIndex];
+        const maxRowID: number = (Boards.RowCounts[boardIndex] - 1)*columnCount;
+        const secondToMaxRowID: number = (Boards.RowCounts[boardIndex] - 2)*columnCount;
+
+        const pieceOrder1: Array<PieceTypes> = [
+            PieceTypes.Pawn, PieceTypes.Pawn, PieceTypes.Pawn, PieceTypes.Pawn, PieceTypes.Pawn, PieceTypes.Pawn, PieceTypes.Pawn, PieceTypes.Pawn
+        ];
+
+        const pieceOrder0: Array<PieceTypes> = [
+            PieceTypes.Rook, PieceTypes.Knight, PieceTypes.Bishop, PieceTypes.King, PieceTypes.Queen, PieceTypes.Bishop, PieceTypes.Knight, PieceTypes.Rook
+        ];
+
+        for (let i = 0; i < playerCount; i++) {
+            for (let j = 0; j < columnsPerPlayer; j++) {
+                const tileID: number = maxRowID + i*columnsPerPlayer + j;
+                console.log(maxRowID, boardIndex, tileID, i, j, pieceOrder0[j]);
+                Boards.setPiece(boardIndex, tileID, i, pieceOrder0[j]);
+            }
+
+            for (let j = 0; j < columnsPerPlayer; j++) {
+                const tileID: number = secondToMaxRowID + i*columnsPerPlayer + j;
+                console.log(maxRowID, boardIndex, tileID, i, j, pieceOrder0[j]);
+                Boards.setPiece(boardIndex, tileID, i, pieceOrder1[j]);
+            }
+        }
+    }
+
+    public static generateCustom(boardIndex: number, pieceOrder1: Array<PieceTypes>, pieceOrder0: Array<PieceTypes>): void {
+        const playerCount: number = Boards.PlayerCounts[boardIndex];
+        const columnsPerPlayer: number = Boards.ColumnCountPerPlayers[boardIndex];
+        const columnCount: number = Boards.ColumnCounts[boardIndex];
+        const maxRowID: number = (Boards.RowCounts[boardIndex] - 1)*columnCount;
+        const secondToMaxRowID: number = (Boards.RowCounts[boardIndex] - 2)*columnCount;
+
+        for (let i = 0; i < playerCount; i++) {
+            for (let j = 0; j < columnsPerPlayer; j++) {
+                const tileID: number = maxRowID + i*columnsPerPlayer + j;
+                Boards.setPiece(boardIndex, tileID, i, pieceOrder0[j]);
+            }
+
+            for (let j = 0; j < columnsPerPlayer; j++) {
+                const tileID: number = secondToMaxRowID + i*columnsPerPlayer + j;
+                Boards.setPiece(boardIndex, tileID, i, pieceOrder1[j]);
+            }
+        }
     }
 }
 
-function setAttackedTiles(boardIndex: number, tileID: number, pieceType: PieceTypes, hasCrossed?: boolean, hasMoved?: boolean): void {
+function setAttackedTiles(boardIndex: number, tileID: number, playerIndex: number, pieceType: PieceTypes, hasCrossed?: boolean, hasMoved?: boolean): void {
     const tileIndex: number = Boards.TileIndices[boardIndex][tileID];
-    console.log("settingAttackedTiles:", boardIndex, tileID, pieceType, hasCrossed, hasMoved);
+    //console.log("settingAttackedTiles:", boardIndex, tileID, pieceType, hasCrossed, hasMoved);
 
+    const playerCount: number = Boards.PlayerCounts[boardIndex];
+    // console.log("Set Attacked Tiles", boardIndex, tileID, pieceType, hasCrossed, hasMoved);
     const possibleTileIDs: Array<number> = MovementService.getPossibleTilesFunction(boardIndex, tileID, pieceType, hasCrossed, hasMoved);
     possibleTileIDs.forEach((attackedTileID) => {
-        console.log("CanAttackTile:", attackedTileID, "TileAttackedBy:", tileID);
+        // console.log("CanAttackTile:", attackedTileID, "TileAttackedBy:", tileID);
         const attackedTileIndex: number = Boards.TileIndices[boardIndex][attackedTileID];
+
         Tiles.CanAttack[tileIndex].push(attackedTileID);
         Tiles.AttackedBy[attackedTileIndex].push(tileID);
+
+        const attackedPieceIndex: number | undefined = Tiles.Occupations[boardIndex];
+        if (attackedPieceIndex === undefined) return;
+
+        const attackedPieceType: PieceTypes = Pieces.PieceTypes[attackedPieceIndex];
+        const attackedPlayerIndex: number = Pieces.PlayerIndices[attackedPieceIndex];
+        if (attackedPlayerIndex === playerIndex || attackedPieceType !== PieceTypes.King) return;
+
+        const nextPlayerID: number = (Boards.CurrentPlayers[boardIndex]! + 1) % playerCount;
+        if (Boards.PlayerIndices[boardIndex][nextPlayerID] !== attackedPlayerIndex) Boards.eliminatePlayer(boardIndex, nextPlayerID);
+
+        Players.InCheckBy[attackedPlayerIndex] = tileID;
     });
 }
 
 function clearAttackedTiles(boardIndex: number, tileID: number): void {
     const tileIndex: number = Boards.TileIndices[boardIndex][tileID];
-    console.log("clearingAttackedTiles:", boardIndex, tileID);
+    // console.log("clearingAttackedTiles:", boardIndex, tileID);
 
     Tiles.CanAttack[tileIndex].forEach((attackedTileID) => {
-        console.log("Clearing Attacked Tile:", attackedTileID);
+        // console.log("Clearing Attacked Tile:", attackedTileID);
         const attackedTileIndex: number = Boards.TileIndices[boardIndex][attackedTileID];
         const index: number = Tiles.AttackedBy[attackedTileIndex].indexOf(tileID);
         if (index === -1) return;
@@ -135,12 +272,12 @@ function clearAttackedTiles(boardIndex: number, tileID: number): void {
         Tiles.AttackedBy[attackedTileIndex].splice(index, 1);
     });
 
-    console.log("Cleared CanAttacked Tiles:", boardIndex, tileID);
+    // console.log("Cleared CanAttacked Tiles:", boardIndex, tileID);
     Tiles.CanAttack[tileIndex] = [];
 }
 
 function updateAttackedTiles(boardIndex: number, tileID: number): void {
-    console.log("Updating AttackedBy and CanAttack arrays at tileID:", tileID);
+    // console.log("Updating AttackedBy and CanAttack arrays at tileID:", tileID);
 
     const tileIndex: number = Boards.TileIndices[boardIndex][tileID];
     Tiles.AttackedBy[tileIndex].forEach((nextTileID) => {
@@ -148,78 +285,33 @@ function updateAttackedTiles(boardIndex: number, tileID: number): void {
         const nextPieceIndex: number | undefined = Tiles.Occupations[nextTileIndex];
         if (nextPieceIndex === undefined) { console.warn("nextPieceIndex === undefined when looping through AttackedBy array", nextTileID, "From tileID", tileID); return; }
 
-        const nextPieceType: number = Pieces.PieceTypes[nextPieceIndex];
+        const nextPlayerIndex: number = Pieces.PlayerIndices[nextPieceIndex];
+
+        const nextPieceType: PieceTypes = Pieces.PieceTypes[nextPieceIndex];
         if (PieceData[nextPieceType].attacksContinuously === false) return;
 
         const nextPieceHasCrossed: boolean | undefined = Pieces.HasCrossed.get(nextPieceIndex);
         const nextPieceHasMoved: boolean | undefined = Pieces.HasMoved.get(nextPieceIndex);
 
         clearAttackedTiles(boardIndex, nextTileID);
-        setAttackedTiles(boardIndex, nextTileID, nextPieceType, nextPieceHasCrossed, nextPieceHasMoved);
+        // console.log("Update Attacked Tiles", boardIndex, nextTileID, nextPieceType, nextPieceHasCrossed, nextPieceHasMoved);
+        setAttackedTiles(boardIndex, nextTileID, nextPlayerIndex, nextPieceType, nextPieceHasCrossed, nextPieceHasMoved);
     });
 }
 
+function updateMoatBridges(boardIndex: number, sectorID: number): void {
+    // console.log("UPDATING MOAT BRIDGES AT SECTOR:", sectorID);
+    const moatsCanBridge: boolean = MovementService.moatCanBridge(boardIndex, sectorID);
+    // console.log("moatsCanBridge:", moatsCanBridge);
+    if (!moatsCanBridge) return;
+
+    const [moat0ID, moat1ID] = MovementService.getMoatIDs(boardIndex, sectorID);
+    Boards.MoatIDsBridged[boardIndex].set(moat0ID, true);
+    Boards.MoatIDsBridged[boardIndex].set(moat1ID, true);
+    // console.log(
+        // "moat0ID:", moat0ID, Boards.MoatIDsBridged[boardIndex].get(moat0ID),
+        // "moat1ID:", moat0ID, Boards.MoatIDsBridged[boardIndex].get(moat1ID)
+    // );
+}
+
 export default Boards;
-
-// class Board {
-//     public static Boards: Array<Board> =  [];
-
-//     public BoardID: number;
-
-//     public PlayerCount: number;
-//     public RowCount: number
-//     public ColumnCount: number;
-
-//     public Teams: Array<Team>;
-//     public Tiles: Array<Tile>;
-
-//     constructor(playerCount: number, rowCount: number) {
-//         this.BoardID = Board.Boards.length;
-
-//         this.PlayerCount = playerCount;
-//         this.RowCount = rowCount;
-//         this.ColumnCount = this.PlayerCount * 8;
-
-//         this.Teams = new Array(this.PlayerCount);
-//         this.Tiles = new Array(this.RowCount * this.ColumnCount);
-        
-//         this.initialize();
-//     }
-
-//     private initialize(): void {
-//         Board.Boards[this.BoardID] = this;
-
-//         const colorIncrement = 360/this.PlayerCount;
-//         for (let i = 0; i < this.PlayerCount; i++) {
-//             this.Teams[i] = new Team(this.BoardID, i, `Team ${i + 1}`, `hsl(${i * colorIncrement}, 100%, 50%)`);
-//         }
-
-//         for (let i = 0; i < this.Tiles.length; i++) {
-//             this.Tiles[i] = new Tile(this.BoardID);
-//         }
-//     }
-
-//     public editTeam(teamID: number, name: string, color: string): void {
-//         const team = this.Teams[teamID];
-//         team.Name = name;
-//         team.Color = color;
-//     }
-
-//     public setPiece(pieceType: number, pieceID: number, teamID: number, tileIndex: number): void {
-//         const tile: Tile = this.Tiles[tileIndex];
-//         tile.Occupation = pieceID;
-//         tile.TeamID = teamID;
-//     }
-
-//     public removePiece(tileIndex: number): void {
-//         const tile: Tile = this.Tiles[tileIndex];
-//         tile.Occupation = undefined;
-//         tile.TeamID = undefined;
-//     }
-
-//     public getTileID(column: number, row: number): number{
-//         return (column % this.ColumnCount) + (row % this.RowCount) * this.ColumnCount;
-//     }
-// }
-
-// export default Board;

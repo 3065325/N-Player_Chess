@@ -1,24 +1,23 @@
 import Pieces from "./pieces.js";
 
 class Players {
-    public static BoardIndexes: Array<number> = [];
+    public static BoardIndices: Array<number> = [];
     public static Pieces: Array<Array<number>> = [];
-
-    public static Names: Array<string> = [];
+    public static TakenPieces: Array<Array<number>> = [];
+    public static InCheckBy: Array<number | undefined> = [];
     public static IsDead: Array<boolean> = [];
 
     private static Counter: number = 0;
     private static IndexStack: Array<number> = [];
 
-    public static createPlayer(boardIndex: number, name: string): number {
+    public static createPlayer(boardIndex: number): number {
         const nextIndex: number = Players.IndexStack.pop() || Players.Counter++;
 
-        Players.BoardIndexes[nextIndex] = boardIndex;
+        Players.BoardIndices[nextIndex] = boardIndex;
         Players.Pieces[nextIndex] = [];
-
-        Players.Names[nextIndex] = name;
+        Players.TakenPieces[nextIndex] = [];
+        Players.InCheckBy[nextIndex] = undefined;
         Players.IsDead[nextIndex] = false;
-
         return nextIndex;
     }
 
@@ -27,34 +26,16 @@ class Players {
 
         Players.IndexStack.push(playerIndex);
 
-        delete Players.BoardIndexes[playerIndex];
+        delete Players.BoardIndices[playerIndex];
         delete Players.Pieces[playerIndex];
-        
-        delete Players.Names[playerIndex];
+        delete Players.TakenPieces[playerIndex];
+        delete Players.InCheckBy[playerIndex];
         delete Players.IsDead[playerIndex];
+    }
+
+    public static setPlayerDead(playerIndex: number, isDead: boolean): void {
+        Players.IsDead[playerIndex] = isDead;
     }
 }
 
 export default Players;
-
-// class Team {
-//     public BoardID: number;
-//     public TeamID: number;
-
-//     public Name: string;
-//     public Color: string;
-
-//     public PieceCount: number;
-
-//     constructor(boardID: number, teamID: number, name: string, color: string) {
-//         this.BoardID = boardID;
-//         this.TeamID = teamID;
-
-//         this.Name = name;
-//         this.Color = color;
-
-//         this.PieceCount = 16;
-//     }
-// }
-
-// export default Team;
