@@ -14,11 +14,12 @@ const sin = Math.sin;
 class BoardService {
     static createBoard(center, innerRadius, outerRadius, colors, playerCount, rowCount, columnsPerPlayer) {
         const boardIndex = Boards.createBoard(playerCount, rowCount, columnsPerPlayer);
+        center[1] *= -1;
         BoardService.Centers[boardIndex] = center;
         BoardService.InnerRadii[boardIndex] = innerRadius;
         BoardService.OuterRadii[boardIndex] = outerRadius;
         BoardService.Colors[boardIndex] = colors;
-        BoardService.SelectedTileID[boardIndex] = undefined;
+        BoardService.SelectedTileIDs[boardIndex] = undefined;
         for (let i = 0; i < Boards.PlayerIndices[boardIndex].length; i++) {
             const playerIndex = Boards.PlayerIndices[boardIndex][i];
             PlayerService.Colors[playerIndex] = `hsl(${i * 300 / playerCount}, 80%, 40%)`;
@@ -31,7 +32,7 @@ class BoardService {
         delete BoardService.InnerRadii[boardIndex];
         delete BoardService.OuterRadii[boardIndex];
         delete BoardService.Colors[boardIndex];
-        delete BoardService.SelectedTileID[boardIndex];
+        delete BoardService.SelectedTileIDs[boardIndex];
     }
     static renderBoard(boardIndex, outline, drawIDs) {
         const playerID = Boards.CurrentPlayers[boardIndex] || 0;
@@ -65,10 +66,8 @@ class BoardService {
                 c.strokeStyle = tileExists ? colors[(i + j) % 2] : "#000000";
                 c.arc(center[0], center[1], radius, -(offsetAngle + angle - PI / 2), -(offsetAngle + nextAngle - PI / 2), true);
                 c.stroke();
-            }
-            if (!drawIDs)
-                continue;
-            for (let j = 0; j < columnCount; j++) {
+                if (!drawIDs)
+                    continue;
                 const midAngle = (j + 0.5) * angleIncrement;
                 c.fillStyle = "#ffffff";
                 c.font = `${tileWidth / 2.5}px Fira Code`;
@@ -136,7 +135,7 @@ class BoardService {
         const playerCount = Boards.PlayerCounts[boardIndex];
         const center = BoardService.Centers[boardIndex];
         const newX = point[0] - center[0];
-        const newY = point[1] - center[1];
+        const newY = point[1] + center[1];
         const radius = Math.sqrt(Math.pow(newX, 2) + Math.pow(newY, 2));
         const angle = mod(-Math.atan(newX / newY) + PI * ceil(newY / (2 * radius)) + (PI / playerCount) * (1 + 2 * playerID), 2 * PI);
         return [radius, angle];
@@ -150,52 +149,54 @@ class BoardService {
     }
     static selectTileID(boardIndex, point) {
         const playerID = Boards.CurrentPlayers[boardIndex] || 0;
-        const currentSelected = BoardService.SelectedTileID[boardIndex];
+        console.log(playerID, boardIndex, Boards.CurrentPlayers);
+        const currentSelected = BoardService.SelectedTileIDs[boardIndex];
         const polarPoint = BoardService.pointToBoard(boardIndex, point);
         const tileID = BoardService.polarToTileID(boardIndex, polarPoint);
         if (tileID < 0 || tileID >= Boards.TileIndices[boardIndex].length) {
-            BoardService.SelectedTileID[boardIndex] = undefined;
+            BoardService.SelectedTileIDs[boardIndex] = undefined;
             return;
         }
         const tileIndex = Boards.TileIndices[boardIndex][tileID];
         const pieceIndex = Tiles.Occupations[tileIndex];
         if (tileID === currentSelected) {
-            BoardService.SelectedTileID[boardIndex] = undefined;
+            BoardService.SelectedTileIDs[boardIndex] = undefined;
             return;
         }
         if (currentSelected === undefined && pieceIndex !== undefined && Pieces.PlayerIndices[pieceIndex] !== Boards.PlayerIndices[boardIndex][playerID]) {
-            BoardService.SelectedTileID[boardIndex] = undefined;
+            BoardService.SelectedTileIDs[boardIndex] = undefined;
             return;
         }
         if (currentSelected !== undefined) {
             const attackingTileIndex = Boards.TileIndices[boardIndex][currentSelected];
             const attackingPieceIndex = Tiles.Occupations[attackingTileIndex];
             if (attackingPieceIndex === undefined) {
-                BoardService.SelectedTileID[boardIndex] = undefined;
+                BoardService.SelectedTileIDs[boardIndex] = undefined;
                 return;
             }
             const attackingPieceType = Pieces.PieceTypes[attackingPieceIndex];
-            const attackingPieceHasCrossed = Pieces.HasCrossed[attackingPieceIndex];
-            const attackingPieceHasMoved = Pieces.HasMoved[attackingPieceIndex];
+            const attackingPieceHasCrossed = Pieces.HasCrossed.get(attackingPieceIndex);
+            const attackingPieceHasMoved = Pieces.HasMoved.get(attackingPieceIndex);
+            console.log(attackingPieceIndex, attackingPieceType, attackingPieceHasCrossed, attackingPieceHasMoved);
             const possibleMoves = MovementService.getPossibleMovesFunction(boardIndex, currentSelected, playerID, attackingPieceType, attackingPieceHasCrossed, attackingPieceHasMoved);
             const possibleAttacks = MovementService.getPossibleAttacksFunction(boardIndex, currentSelected, playerID, attackingPieceType, attackingPieceHasCrossed, attackingPieceHasMoved);
             console.log(tileID, possibleAttacks.indexOf(tileID) === -1, possibleMoves.indexOf(tileID) === -1);
             if (possibleAttacks.indexOf(tileID) === -1 && possibleMoves.indexOf(tileID) === -1) {
-                BoardService.SelectedTileID[boardIndex] = undefined;
+                BoardService.SelectedTileIDs[boardIndex] = undefined;
                 return;
             }
             Boards.movePiece(boardIndex, currentSelected, tileID);
             setTimeout(() => {
                 Boards.iterateCurrentPlayer(boardIndex);
             }, 1000);
-            BoardService.SelectedTileID[boardIndex] = undefined;
+            BoardService.SelectedTileIDs[boardIndex] = undefined;
             return;
         }
-        BoardService.SelectedTileID[boardIndex] = tileID;
+        BoardService.SelectedTileIDs[boardIndex] = tileID;
     }
     static renderSelectedTile(boardIndex, color) {
         const playerID = Boards.CurrentPlayers[boardIndex] || 0;
-        const tileID = BoardService.SelectedTileID[boardIndex];
+        const tileID = BoardService.SelectedTileIDs[boardIndex];
         if (tileID === undefined)
             return;
         BoardService.highlightTiles(boardIndex, [tileID], color);
@@ -205,8 +206,8 @@ class BoardService {
             return;
         const playerIndex = Pieces.PlayerIndices[pieceIndex];
         const pieceType = Pieces.PieceTypes[pieceIndex];
-        const pieceHasCrossed = Pieces.HasCrossed[pieceIndex];
-        const pieceHasMoved = Pieces.HasMoved[pieceIndex];
+        const pieceHasCrossed = Pieces.HasCrossed.get(pieceIndex);
+        const pieceHasMoved = Pieces.HasMoved.get(pieceIndex);
         const possibleMoves = MovementService.getPossibleMovesFunction(boardIndex, tileID, playerID, pieceType, pieceHasCrossed, pieceHasMoved);
         const possibleAttacks = MovementService.getPossibleAttacksFunction(boardIndex, tileID, playerID, pieceType, pieceHasCrossed, pieceHasMoved);
         BoardService.highlightTiles(boardIndex, possibleMoves, Registry.moveColor);
@@ -217,7 +218,7 @@ BoardService.Centers = [];
 BoardService.InnerRadii = [];
 BoardService.OuterRadii = [];
 BoardService.Colors = [];
-BoardService.SelectedTileID = [];
+BoardService.SelectedTileIDs = [];
 class PieceService {
     static renderPiece(pieceIndex, position, radius) {
         const pieceType = Pieces.PieceTypes[pieceIndex];

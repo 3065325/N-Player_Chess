@@ -24,17 +24,18 @@ class BoardService {
     public static OuterRadii: Array<number> = [];
     public static Colors: Array<Vector3DString> = [];
 
-    public static SelectedTileID: Array<number | undefined> = [];
+    public static SelectedTileIDs: Array<number | undefined> = [];
 
     public static createBoard(center: Vector2D, innerRadius: number, outerRadius: number, colors: Vector3DString, playerCount: number, rowCount?: number, columnsPerPlayer?: number): number {
         const boardIndex: number = Boards.createBoard(playerCount, rowCount, columnsPerPlayer);
 
+        center[1] *= -1;
         BoardService.Centers[boardIndex] = center;
         BoardService.InnerRadii[boardIndex] = innerRadius;
         BoardService.OuterRadii[boardIndex] = outerRadius;
         BoardService.Colors[boardIndex] = colors;
 
-        BoardService.SelectedTileID[boardIndex] = undefined;
+        BoardService.SelectedTileIDs[boardIndex] = undefined;
 
         for (let i = 0; i < Boards.PlayerIndices[boardIndex].length; i++) {
             const playerIndex: number = Boards.PlayerIndices[boardIndex][i];
@@ -53,7 +54,7 @@ class BoardService {
         delete BoardService.OuterRadii[boardIndex];
         delete BoardService.Colors[boardIndex];
 
-        delete BoardService.SelectedTileID[boardIndex];
+        delete BoardService.SelectedTileIDs[boardIndex];
     }
 
     public static renderBoard(boardIndex: number, outline?: number, drawIDs?: boolean): void {
@@ -96,11 +97,9 @@ class BoardService {
 
                 c.arc(center[0], center[1], radius, -(offsetAngle + angle - PI/2), -(offsetAngle + nextAngle - PI/2), true);
                 c.stroke();
-            }
 
-            if (!drawIDs) continue;
+                if (!drawIDs) continue;
 
-            for (let j = 0; j < columnCount; j++) {
                 const midAngle: number = (j + 0.5)*angleIncrement;
                 
                 c.fillStyle = "#ffffff";
@@ -189,7 +188,7 @@ class BoardService {
         const playerCount: number = Boards.PlayerCounts[boardIndex];
         const center: Vector2D = BoardService.Centers[boardIndex];
         const newX: number = point[0] - center[0];
-        const newY: number = point[1] - center[1];
+        const newY: number = point[1] + center[1];
         const radius: number = Math.sqrt(newX**2 + newY**2);
         const angle: number = mod(-Math.atan(newX/newY) + PI*ceil(newY/(2*radius)) + (PI/playerCount)*(1 + 2*playerID), 2*PI);
 
@@ -207,25 +206,26 @@ class BoardService {
 
     public static selectTileID(boardIndex: number, point: Vector2D): void {
         const playerID: number = Boards.CurrentPlayers[boardIndex] || 0;
+        console.log(playerID, boardIndex, Boards.CurrentPlayers)
 
-        const currentSelected: number | undefined = BoardService.SelectedTileID[boardIndex];
+        const currentSelected: number | undefined = BoardService.SelectedTileIDs[boardIndex];
 
         const polarPoint: Vector2D = BoardService.pointToBoard(boardIndex, point);
         const tileID: number = BoardService.polarToTileID(boardIndex, polarPoint);
         if (tileID < 0 || tileID >= Boards.TileIndices[boardIndex].length) {
-            BoardService.SelectedTileID[boardIndex] = undefined;
+            BoardService.SelectedTileIDs[boardIndex] = undefined;
             return;
         }
 
         const tileIndex: number = Boards.TileIndices[boardIndex][tileID];
         const pieceIndex: number | undefined = Tiles.Occupations[tileIndex];
         if (tileID === currentSelected) {
-            BoardService.SelectedTileID[boardIndex] = undefined;
+            BoardService.SelectedTileIDs[boardIndex] = undefined;
             return;
         }
 
         if (currentSelected === undefined && pieceIndex !== undefined && Pieces.PlayerIndices[pieceIndex] !== Boards.PlayerIndices[boardIndex][playerID]) {
-            BoardService.SelectedTileID[boardIndex] = undefined;
+            BoardService.SelectedTileIDs[boardIndex] = undefined;
             return;
         }
         
@@ -233,20 +233,22 @@ class BoardService {
             const attackingTileIndex: number = Boards.TileIndices[boardIndex][currentSelected];
             const attackingPieceIndex: number | undefined = Tiles.Occupations[attackingTileIndex];
             if (attackingPieceIndex === undefined) {
-                BoardService.SelectedTileID[boardIndex] = undefined;
+                BoardService.SelectedTileIDs[boardIndex] = undefined;
                 return;
             }
 
             const attackingPieceType: PieceTypes = Pieces.PieceTypes[attackingPieceIndex];
-            const attackingPieceHasCrossed: boolean = Pieces.HasCrossed[attackingPieceIndex];
-            const attackingPieceHasMoved: boolean = Pieces.HasMoved[attackingPieceIndex];
+            const attackingPieceHasCrossed: boolean | undefined = Pieces.HasCrossed.get(attackingPieceIndex);
+            const attackingPieceHasMoved: boolean | undefined = Pieces.HasMoved.get(attackingPieceIndex);
+
+            console.log(attackingPieceIndex, attackingPieceType, attackingPieceHasCrossed, attackingPieceHasMoved)
 
             const possibleMoves: Array<number> = MovementService.getPossibleMovesFunction(boardIndex, currentSelected, playerID, attackingPieceType, attackingPieceHasCrossed, attackingPieceHasMoved);
             const possibleAttacks: Array<number> = MovementService.getPossibleAttacksFunction(boardIndex, currentSelected, playerID, attackingPieceType, attackingPieceHasCrossed, attackingPieceHasMoved);
 
             console.log(tileID, possibleAttacks.indexOf(tileID) === -1, possibleMoves.indexOf(tileID) === -1)
             if (possibleAttacks.indexOf(tileID) === -1 && possibleMoves.indexOf(tileID) === -1) {
-                BoardService.SelectedTileID[boardIndex] = undefined;
+                BoardService.SelectedTileIDs[boardIndex] = undefined;
                 return;
             }
             
@@ -256,18 +258,18 @@ class BoardService {
                 Boards.iterateCurrentPlayer(boardIndex);
             }, 1000)
 
-            BoardService.SelectedTileID[boardIndex] = undefined;
+            BoardService.SelectedTileIDs[boardIndex] = undefined;
 
             return;
         }
 
-        BoardService.SelectedTileID[boardIndex] = tileID;
+        BoardService.SelectedTileIDs[boardIndex] = tileID;
     }
 
     public static renderSelectedTile(boardIndex: number, color: string): void {
         const playerID: number = Boards.CurrentPlayers[boardIndex] || 0;
 
-        const tileID: number | undefined = BoardService.SelectedTileID[boardIndex];
+        const tileID: number | undefined = BoardService.SelectedTileIDs[boardIndex];
         if (tileID === undefined) return;
 
         BoardService.highlightTiles(boardIndex, [tileID], color);
@@ -279,8 +281,8 @@ class BoardService {
         const playerIndex: number = Pieces.PlayerIndices[pieceIndex];
 
         const pieceType: PieceTypes = Pieces.PieceTypes[pieceIndex];
-        const pieceHasCrossed: boolean = Pieces.HasCrossed[pieceIndex];
-        const pieceHasMoved: boolean = Pieces.HasMoved[pieceIndex];
+        const pieceHasCrossed: boolean | undefined = Pieces.HasCrossed.get(pieceIndex);
+        const pieceHasMoved: boolean | undefined = Pieces.HasMoved.get(pieceIndex);
 
         const possibleMoves: Array<number> = MovementService.getPossibleMovesFunction(boardIndex, tileID, playerID, pieceType, pieceHasCrossed, pieceHasMoved);
         const possibleAttacks: Array<number> = MovementService.getPossibleAttacksFunction(boardIndex, tileID, playerID, pieceType, pieceHasCrossed, pieceHasMoved);
@@ -289,7 +291,7 @@ class BoardService {
     }
 }
 
-class PieceService {
+class PieceService { // HTMLImageElement? Whats that
     public static LoadedImages: Array<HTMLImageElement> = [];
 
     public static ImageSources: Array<string> = [

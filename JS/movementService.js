@@ -83,11 +83,11 @@ function crossedBorders(boardIndex, tile0ID, tile1ID) {
     const row0 = floor(tile0ID / columnCount);
     const row1 = floor(tile1ID / columnCount);
     const moatRow = rowCount - 1;
-    const creekRow = rowCount - 3;
-    const avg = (row0 + row1) / 2;
+    const creekRow = moatRow - 2;
+    const avg = 0.5 * (row0 + row1);
     const loopsAround = tile0ID === 0 || tile1ID === 0;
-    const moatID = columnCount * (rowCount - 1) + Math.max((+loopsAround) * sector0ID, (+loopsAround) * sector0ID) * columnsPerPlayer;
-    return [avg >= moatRow ? moatID : undefined, avg >= creekRow ? moatID : undefined];
+    const moatID = columnCount * (rowCount - 1) + Math.max((+loopsAround) * sector0ID, (+loopsAround) * sector1ID) * columnsPerPlayer;
+    return [avg > moatRow ? moatID : undefined, avg > creekRow ? moatID : undefined];
 }
 MovementService.MaxPathLengthFunctions[MoveFuncs.moveIn] = (boardIndex) => {
     return 2 * Boards.RowCounts[boardIndex];
@@ -123,6 +123,8 @@ MovementService.MoveFunctions[MoveFuncs.moveInRight] = (boardIndex, tileID, amou
     const rowDelta = rowCount - (tileR + 1);
     const moveT = mod(rowDelta + amount + maxRow, 2 * maxRow + 1) - maxRow;
     const moveR = Math.abs(moveT);
+    if (amount < 1 - rowDelta || amount > 1 + MovementService.MaxPathLengthFunctions[MoveFuncs.moveInRight](boardIndex) - rowDelta)
+        return;
     return Math.round(mod(tileT - rowDelta + moveT, columnCount) + (maxRow - moveR) * columnCount);
 };
 MovementService.MoveFunctions[MoveFuncs.moveInLeft] = (boardIndex, tileID, amount) => {
@@ -134,12 +136,15 @@ MovementService.MoveFunctions[MoveFuncs.moveInLeft] = (boardIndex, tileID, amoun
     const rowDelta = rowCount - (tileR + 1);
     const moveT = mod(rowDelta + amount + maxRow, 2 * maxRow + 1) - maxRow;
     const moveR = Math.abs(moveT);
+    if (amount < 1 - rowDelta || amount > 1 + MovementService.MaxPathLengthFunctions[MoveFuncs.moveInLeft](boardIndex) - rowDelta)
+        return;
     return Math.round(mod(tileT + rowDelta - moveT, columnCount) + (maxRow - moveR) * columnCount);
 };
 MovementService.PossibleMovesFunctions[PieceTypes.Pawn] = (boardIndex, tileID, playerID, hasCrossed, hasMoved) => {
     const reachableTileIDs = [];
-    const sign = 1 - 2 * +(hasCrossed || false);
-    for (let i = 1; i <= 1 + +!hasMoved; i++) {
+    const sign = 1 - 2 * +(hasCrossed);
+    for (let i = 1; i <= 2 - +(hasMoved); i++) {
+        console.log(hasMoved, 2 - +(hasMoved));
         const nextTileID = MovementService.MoveFunctions[MoveFuncs.moveIn](boardIndex, tileID, sign * i);
         if (nextTileID === undefined)
             break;
@@ -204,8 +209,10 @@ MovementService.PossibleMovesFunctions[PieceTypes.Bishop] = (boardIndex, tileID,
                 const nextTileID = MovementService.MoveFunctions[moveFuncIndex](boardIndex, tileID, i * j);
                 if (nextTileID === undefined)
                     break;
-                const [_, creekID] = crossedBorders(boardIndex, lastTileID, nextTileID);
-                if (creekID !== undefined && PieceData[PieceTypes.Queen].crossesCreeks === false && Boards.MoatIDsBridged[boardIndex].get(creekID) === false)
+                const [moatID, creekID] = crossedBorders(boardIndex, lastTileID, nextTileID);
+                if (moatID !== undefined && Boards.MoatIDsBridged[boardIndex].get(moatID) === false)
+                    break;
+                if (creekID !== undefined && PieceData[PieceTypes.Bishop].crossesCreeks === false && Boards.MoatIDsBridged[boardIndex].get(creekID) === false)
                     break;
                 const nextTileIndex = Boards.TileIndices[boardIndex][nextTileID];
                 const nextPieceIndex = Tiles.Occupations[nextTileIndex];
@@ -327,10 +334,6 @@ MovementService.PossibleMovesFunctions[PieceTypes.King] = (boardIndex, tileID, p
     return reachableTileIDs;
 };
 MovementService.PossibleAttacksFunctions[PieceTypes.Pawn] = (boardIndex, tileID, playerID, hasCrossed, hasMoved) => {
-    if (hasCrossed === undefined)
-        hasCrossed = false;
-    if (hasMoved === undefined)
-        hasMoved = false;
     const reachableTileIDs = [];
     const playerIndex = Boards.PlayerIndices[boardIndex][playerID];
     const sign = 1 - 2 * +(hasCrossed);
@@ -342,10 +345,11 @@ MovementService.PossibleAttacksFunctions[PieceTypes.Pawn] = (boardIndex, tileID,
         const nextPieceIndex = Tiles.Occupations[nextTileIndex];
         if (nextPieceIndex === undefined || Pieces.PlayerIndices[nextPieceIndex] === playerIndex)
             return;
-        const [_, creekID] = crossedBorders(boardIndex, tileID, nextTileID);
-        if (creekID !== undefined && PieceData[PieceTypes.Pawn].crossesCreeks === false && Boards.MoatIDsBridged[boardIndex].get(creekID) === false && hasCrossed === false)
+        const [moatID, creekID] = crossedBorders(boardIndex, tileID, nextTileID);
+        if (moatID !== undefined && Boards.MoatIDsBridged[boardIndex].get(moatID) === false)
             return;
-        console.log("Movement Service", tileID, playerID, creekID !== undefined, PieceData[PieceTypes.Pawn].crossesCreeks, Boards.MoatIDsBridged[boardIndex].get(creekID), hasCrossed);
+        if (creekID !== undefined && PieceData[PieceTypes.Pawn].crossesCreeks === false && Boards.MoatIDsBridged[boardIndex].get(creekID) === false)
+            return;
         reachableTileIDs.push(nextTileID);
     };
     frontCheck(MoveFuncs.moveInLeft);
@@ -394,8 +398,8 @@ MovementService.PossibleAttacksFunctions[PieceTypes.Knight] = (boardIndex, tileI
             }
         }
     };
-    backFrontSidesCheck(MoveFuncs.moveRight, MoveFuncs.moveIn, 2, 1);
     backFrontSidesCheck(MoveFuncs.moveIn, MoveFuncs.moveRight, 2, 1);
+    backFrontSidesCheck(MoveFuncs.moveIn, MoveFuncs.moveRight, 1, 2);
     return reachableTileIDs;
 };
 MovementService.PossibleAttacksFunctions[PieceTypes.Bishop] = (boardIndex, tileID, playerID, hasCrossed, hasMoved) => {
@@ -408,8 +412,10 @@ MovementService.PossibleAttacksFunctions[PieceTypes.Bishop] = (boardIndex, tileI
                 const nextTileID = MovementService.MoveFunctions[moveFuncIndex](boardIndex, tileID, i * j);
                 if (nextTileID === undefined)
                     break;
-                const [_, creekID] = crossedBorders(boardIndex, lastTileID, nextTileID);
-                if (creekID !== undefined && PieceData[PieceTypes.Rook].crossesCreeks === false && Boards.MoatIDsBridged[boardIndex].get(creekID) === false)
+                const [moatID, creekID] = crossedBorders(boardIndex, lastTileID, nextTileID);
+                if (moatID !== undefined && Boards.MoatIDsBridged[boardIndex].get(moatID) === false)
+                    break;
+                if (creekID !== undefined && PieceData[PieceTypes.Bishop].crossesCreeks === false && Boards.MoatIDsBridged[boardIndex].get(creekID) === false)
                     break;
                 const nextTileIndex = Boards.TileIndices[boardIndex][nextTileID];
                 const nextPieceIndex = Tiles.Occupations[nextTileIndex];
@@ -551,8 +557,10 @@ MovementService.PossibleTilesFunctions[PieceTypes.Pawn] = (boardIndex, tileID, h
         const nextTileID = MovementService.MoveFunctions[moveFuncIndex](boardIndex, tileID, sign * 1);
         if (nextTileID === undefined)
             return;
-        const [_, creekID] = crossedBorders(boardIndex, tileID, nextTileID);
-        if (creekID !== undefined && PieceData[PieceTypes.Pawn].crossesCreeks === false && Boards.MoatIDsBridged[boardIndex].get(creekID) === false && hasCrossed === false)
+        const [moatID, creekID] = crossedBorders(boardIndex, tileID, nextTileID);
+        if (moatID !== undefined && Boards.MoatIDsBridged[boardIndex].get(moatID) === false)
+            return;
+        if (creekID !== undefined && PieceData[PieceTypes.Pawn].crossesCreeks === false && Boards.MoatIDsBridged[boardIndex].get(creekID) === false)
             return;
         reachableTileIDs.push(nextTileID);
     };
@@ -610,7 +618,9 @@ MovementService.PossibleTilesFunctions[PieceTypes.Bishop] = (boardIndex, tileID,
                 const nextTileID = MovementService.MoveFunctions[moveFuncIndex](boardIndex, tileID, i * j);
                 if (nextTileID === undefined)
                     break;
-                const [_, creekID] = crossedBorders(boardIndex, lastTileID, nextTileID);
+                const [moatID, creekID] = crossedBorders(boardIndex, lastTileID, nextTileID);
+                if (moatID !== undefined && Boards.MoatIDsBridged[boardIndex].get(moatID) === false)
+                    break;
                 if (creekID !== undefined && PieceData[PieceTypes.Bishop].crossesCreeks === false && Boards.MoatIDsBridged[boardIndex].get(creekID) === false)
                     break;
                 if (reachableTileIDs.indexOf(nextTileID) === -1)

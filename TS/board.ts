@@ -20,9 +20,10 @@ class Boards {
     public static TileIndices: Array<Array<number>> = [];
     public static MoatIDsBridged: Array<Map<number, boolean>> = [];
 
-    public static GameStates: Array<GameState> = [];
-    public static CurrentPlayers: Array<number | undefined> = [];
+    public static PlayersChecked: Array<Array<number>> = [];
     public static RemainingPlayers: Array<Array<number>> = [];
+    public static CurrentPlayers: Array<number | undefined> = [];
+    public static GameStates: Array<GameState> = [];
 
     private static Counter: number = 0;
     private static IndexStack: Array<number> = [];
@@ -39,17 +40,8 @@ class Boards {
         Boards.RowCounts[nextIndex] = rowCount;
         Boards.ColumnCountPerPlayers[nextIndex] = columnsPerPlayer;
 
-        let tempArray: Array<number> = new Array(playerCount);
-        for (let i = 0; i < playerCount; i++) {
-            tempArray[i] = Players.createPlayer(nextIndex);
-        }
-        Boards.PlayerIndices[nextIndex] = tempArray;
-
-        tempArray = new Array(columnCount*rowCount);
-        for (let i = 0; i < tempArray.length; i++) {
-            tempArray[i] = Tiles.createTile(nextIndex);
-        }
-        Boards.TileIndices[nextIndex] = tempArray;
+        Boards.PlayerIndices[nextIndex] = Array.from({length: playerCount}, () => Players.createPlayer(nextIndex));
+        Boards.TileIndices[nextIndex] = Array.from({length: columnCount*rowCount}, () => Tiles.createTile(nextIndex));
 
         let tempMap: Map<number, boolean> = new Map();
         for (let i = 0; i < playerCount; i++) {
@@ -57,9 +49,9 @@ class Boards {
         }
         Boards.MoatIDsBridged[nextIndex] = tempMap;
 
-        Boards.GameStates[nextIndex] = GameState.Started;
+        Boards.RemainingPlayers[nextIndex] = Array.from({length: playerCount}, (_, k) => k);
         Boards.CurrentPlayers[nextIndex] = 0;
-        Boards.RemainingPlayers[nextIndex] = Boards.PlayerIndices[nextIndex];
+        Boards.GameStates[nextIndex] = GameState.Started;
 
         return nextIndex;
     }
@@ -77,14 +69,19 @@ class Boards {
         delete Boards.PlayerIndices[boardIndex];
         delete Boards.TileIndices[boardIndex];
         delete Boards.MoatIDsBridged[boardIndex];
+
+        delete Boards.RemainingPlayers[boardIndex];
+        delete Boards.CurrentPlayers[boardIndex];
+        delete Boards.GameStates[boardIndex];
     }
 
     public static iterateCurrentPlayer(boardIndex: number): void {
-        const playerCount: number = Boards.PlayerCounts[boardIndex];
         const currentPlayerID: number | undefined = Boards.CurrentPlayers[boardIndex];
         if (currentPlayerID === undefined) return;
 
-        Boards.CurrentPlayers[boardIndex] = (currentPlayerID + 1) % playerCount;
+        const remainingCount: number = Boards.RemainingPlayers[boardIndex].length;
+        console.log("iterateCurrentPlayer", currentPlayerID, (currentPlayerID + 1) % remainingCount, Boards.RemainingPlayers[boardIndex])
+        Boards.CurrentPlayers[boardIndex] = Boards.RemainingPlayers[boardIndex][(currentPlayerID + 1) % remainingCount];
     }
 
     public static eliminatePlayer(boardIndex: number, playerID: number): void {
@@ -144,17 +141,23 @@ class Boards {
         updateAttackedTiles(boardIndex, tile1ID);
 
         const sectorID: number = MovementService.getSectorID(boardIndex, tile0ID);
-        const [tile0Row, _] = MovementService.getTileIDRowColumn(boardIndex, tile0ID);
-        if (Boards.PlayerIndices[boardIndex][sectorID] === player0Index && tile0Row === Boards.RowCounts[boardIndex] - 1) {
-            updateMoatBridges(boardIndex, sectorID)
-        
-            for (let i = 0; i < Boards.TileIndices[boardIndex].length; i++) {
-                const tileIndex = Boards.TileIndices[boardIndex][i];
-                if (Tiles.Occupations[tileIndex] === undefined) continue;
+        const [tile0Row, tile0Column] = MovementService.getTileIDRowColumn(boardIndex, tile0ID);
+        if (Boards.PlayerIndices[boardIndex][sectorID] === player0Index) {
+            if (tile0Row === Boards.RowCounts[boardIndex] - 1) {
+                updateMoatBridges(boardIndex, sectorID)
+            
+                for (let i = 0; i < Boards.TileIndices[boardIndex].length; i++) {
+                    const tileIndex = Boards.TileIndices[boardIndex][i];
+                    if (Tiles.Occupations[tileIndex] === undefined) continue;
+    
+                    updateAttackedTiles(boardIndex, i);
+                }
+            };
 
-                updateAttackedTiles(boardIndex, i);
-            }
-        };
+            const columnCount: number = Boards.ColumnCounts[boardIndex];
+            const [_, tile1Column] = MovementService.getTileIDRowColumn(boardIndex, tile1ID)
+            if (PieceData[piece0Type].storeCrossed && tile1Column === (tile0Column + 0.5*columnCount) % columnCount) Pieces.HasCrossed.set(piece0Index, true);
+        }
 
         Pieces.TileIDs[piece0Index] = tile1ID;
 
@@ -210,22 +213,22 @@ class Boards {
         }
     }
 
-    public static generateCustom(boardIndex: number, pieceOrder1: Array<PieceTypes>, pieceOrder0: Array<PieceTypes>): void {
+    public static generateCustom(boardIndex: number, pieceMatrix: Array<Array<PieceTypes | undefined>>): void {
         const playerCount: number = Boards.PlayerCounts[boardIndex];
         const columnsPerPlayer: number = Boards.ColumnCountPerPlayers[boardIndex];
         const columnCount: number = Boards.ColumnCounts[boardIndex];
-        const maxRowID: number = (Boards.RowCounts[boardIndex] - 1)*columnCount;
-        const secondToMaxRowID: number = (Boards.RowCounts[boardIndex] - 2)*columnCount;
+        const rowCount: number = Boards.RowCounts[boardIndex];
 
         for (let i = 0; i < playerCount; i++) {
-            for (let j = 0; j < columnsPerPlayer; j++) {
-                const tileID: number = maxRowID + i*columnsPerPlayer + j;
-                Boards.setPiece(boardIndex, tileID, i, pieceOrder0[j]);
-            }
+            for(let j = 0; j < pieceMatrix.length; j++) {
+                const rowID: number = (rowCount - (j + 1))*columnCount;
+                const pieceRow: Array<PieceTypes | undefined> = pieceMatrix[j];
 
-            for (let j = 0; j < columnsPerPlayer; j++) {
-                const tileID: number = secondToMaxRowID + i*columnsPerPlayer + j;
-                Boards.setPiece(boardIndex, tileID, i, pieceOrder1[j]);
+                for (let k = 0; k < columnsPerPlayer; k++) {
+                    const tileID: number = rowID + i*columnsPerPlayer + k;
+                    const pieceType: PieceTypes | undefined = pieceRow[k];
+                    if (pieceType !== undefined) Boards.setPiece(boardIndex, tileID, i, pieceType);
+                }
             }
         }
     }
