@@ -12,8 +12,6 @@ let vw: number = canvas.width / 100;
 let vh: number = canvas.height / 100;
 Registry.m = vw;
 
-const CENTER: boolean = true;
-
 const CanvasUpdate = (Color: string): void => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -24,17 +22,15 @@ const CanvasUpdate = (Color: string): void => {
     c.fillStyle = Color;
     c.fillRect(0, 0, canvas.width, canvas.height);
 
-    if (CENTER) {
-        c.translate(0.5*canvas.width, 0.5*canvas.height);
-    }
+    c.translate(0.5*canvas.width, 0.5*canvas.height);
 }
 
 let mousePos: Vector2D = [0, 0];
 
 canvas.addEventListener('mousemove', (e) => {
     const boundingRect = canvas.getBoundingClientRect();
-    mousePos[0] = e.clientX - boundingRect.left - (+CENTER)*0.5*canvas.width;
-    mousePos[1] = -(e.clientY - boundingRect.top - (+CENTER)*0.5*canvas.height);
+    mousePos[0] = e.clientX - boundingRect.left - 0.5*canvas.width;
+    mousePos[1] = -(e.clientY - boundingRect.top - 0.5*canvas.height);
 });
 
 export {canvas, c, CanvasUpdate, vw, vh, mousePos};
